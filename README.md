@@ -1,18 +1,18 @@
 # CppCloud产品说明文档
 
-&emsp;　本产品旨在提供适合多语言开的的分布式微服务架构，功能包括**服务治理（注册/消费）**，**分布式配置**，**服务监控**，**日志收集**等。用户或企业可借此产品可以快速开发具有分布式集群的应用，集中精力来开发自身业务逻辑。
+&emsp;　本产品旨在提供适合多语言开发的分布式微服务框架，功能包括**服务治理（注册/消费）**，**分布式配置**，**就近访问**，**服务监控**，**集中管理**，**日志收集**等。用户或企业可借此产品可以快速开发分布式集群的应用，集中精力来开发自身业务逻辑。
 - [技术blog站](http://blog.cppcloud.cn)
-
+- [开发文档](http://www.cppcloud.cn)
 
 
 ## **前言/背景**
 
-&emsp;　近年来移动互联网的兴起，各应用数据量业务量不断攀升；后端架构要不断提高性能和并发能力才能应对大信息时代的来临；[传统单体程序 -> 面向服务soa -> 微服务](https://www.cnblogs.com/imyalost/p/6792724.html)；`SpringCloud`和`Dubbo`的出现为企业开发分布式应用提供了很好的脚手架，Java得益于ioc/aop反向代理/注解等技术,开发者可以轻松用来构建自己的应用；  
-&emsp;　Java开发分布式微服务是方便了，然而`SpringCloud`提供java之外的接入文档或sdk却非常少，国内更加少了；微服务不是提昌各类的开发者都能参与进来看发整个系统的某一块服务吗，譬如有关业务计算的让cpp、golang开发，展示的让py开发；虽然Netflix说`SpringCloud`各个接口是Restful，但学到用起来的成本个人觉得还是很高。
+&emsp;　近年来移动互联网的兴起，各种应用数据量业务量不断攀升；后端架构要不断提高性能和并发能力才能应对大信息时代的来临；[传统单体程序 -> 面向服务soa -> 微服务](https://www.cnblogs.com/imyalost/p/6792724.html)；`SpringCloud`和`Dubbo`的出现为企业开发分布式应用提供了很好的脚手架，Java得益于ioc/aop反向代理/注解等技术,开发者可以轻松用来构建自己的应用；  
+&emsp;　Java开发分布式微服务是方便了，然而`SpringCloud`提供java之外的接入文档或sdk却非常少，国内更加少了；微服务不是提昌各类的开发者都能参与进来看发整个系统的某一块服务吗，譬如有关业务计算的让c/c++、golang开发，web展示业务的让py或java开发；虽然Netflix说`SpringCloud`各个接口是Restful，但学到用起来的成本个人觉得还是很高。
 
 ## **项目介绍**
 
-&emsp;　本人开发的 ***CppCloud*** 目的就是快速构建分布式服务之余，**特点轻量级**，可以方便国内**不同语言**的开发者参与微服务的开发，而不仅限java；本项目核心服务（**cppcloud_serv**）采用c++开发，支持分布式部署，对外提供tcp服务；外部各应用接入时可以采用原生tcp协议接入、sdk接入、http间接接入；sdk方面目前开发了c++和python，由于一个人精力有限，其他的sdk暂时还未开发出来。  
+&emsp;　本人开发的 ***CppCloud*** 目的就是快速构建分布式服务之余，**特点轻量级**，无乎没什么依赖（不需要mysql redis zookeep之类的），可以方便国内**不同开发语言**的开发者参与微服务的开发，而不仅限java；本项目核心服务（**cppcloud_serv**）采用c++开发，支持分布式部署，对外提供tcp服务；外部各应用接入时可以采用原生tcp协议接入、sdk接入、http间接接入；sdk方面目前开发了c++和python，由于一个人精力有限，其他的sdk暂时还未开发出来。  
 - [TCP协议接入](http://www.cppcloud.cn/doc/server/tcp_cmd/index.html)
 - [C/C++ sdk接入](http://www.cppcloud.cn/doc/cpp_sdk/manual/index.html)
 - [Python sdk接入](http://www.cppcloud.cn/doc/python_sdk/manual/index.html)
@@ -89,17 +89,17 @@ cppcloud                          -- 根目录
 
 
 ## **架构图示**
-![图片加载中](http://www.cppcloud.cn/doc/img/summery.png "summery.png")
+![图片加载中](https://images.gitee.com/uploads/images/2019/0304/212431_44beb9b0_2114904.png "summery.png")
 
 > ### **服务端Serv**
->> &emsp; CppCloud的核心部分，c++实现，提供分布式服务的服务注册、发现、管理等功能，相当于SpringCloud里的Eureka Server的角色；对外提供tcp接口，支持多个Serv集群提高可靠性；cppcloud_serv内部采用epoll异步io复用([Reactor模型](https://www.cnblogs.com/linganxiong/p/5583415.html))，性能比拟nginx/libevent。&emsp; 
+>> &emsp; CppCloud的核心部分，源码在server目录下，c++实现，提供分布式服务的服务注册、发现、管理等功能，相当于SpringCloud里的Eureka Server的角色（java的同学比较了解）；对外提供tcp接口，支持多个Serv集群提高可靠性；cppcloud_serv内部采用epoll异步io复用([Reactor模型](https://www.cnblogs.com/linganxiong/p/5583415.html))，性能比拟nginx/libevent。&emsp; 
 > ### **服务提供Provider**
 >> &emsp; 向cppcloud_serv注册了服务的客户应用，与cppcloud_serv通信使用tcp协议，每一类服务都有唯一的名称，以便让调用者（消费者）根据服务名称(regname)调用。 服务注册时需要提供的主要属性有服务名（regname），服务识别号（prvdid，同一进程提供多服务时使用）协议类别（protocol），权重（weight），启用（enable）等。
 > ### **服务调用Invoker**
->> &emsp; 需要调用（消费）某服务的客户应用，同样的通过tcp与cppcloud_serv通信。不同服务以服务名称区分，调用前应该是明确知道本次要调用的服务名(regname)。 操作流程是首先拿regname向cppcloud_serv查询服务，返回可用服务列表，然后调用者从列表中选出合适的某个Provider，最后直接向该Provider发起调用，调用的具体状况要看协议类别和需要的参数。
+>> &emsp; 需要调用（消费）某服务的客户应用，同样的通过tcp与cppcloud_serv通信。不同服务以服务名称区分，调用前应该是明确知道本次要调用的服务名(regname)。 操作流程是首先拿regname向cppcloud_serv查询服务，返回可用服务列表，然后调用者从列表中选出合适的某个Provider，最后直接向该Provider发起调用，调用的具体内容要看协议类别和需要的参数。
 
 > ### **Web管理**
->> &emsp; 提供可视化web界面操作CppCloud后端，底层用python sdk通过tcp和cppcloud_serv通信，上层对用户提供出restful的接口，和前后端分离的web管理应用。 维护人员可以在web监视服务运行状况、给某应用下发命令，维护分布式配置、修改服务提供者权重等功能。
+>> &emsp; 提供可视化web界面操作CppCloud后端，底层用python sdk通过tcp和cppcloud_serv通信，上层对用户提供出restful的接口，和前后端分离的web管理页面。 维护人员可以在web监视服务运行状况、给某应用下发命令，维护分布式配置、修改服务提供者权重等功能。大家可以先参看官网上提供的演示界面，[点击这里](http://www.cppcloud.cn:81/static/index.html)。
 
 ## **开发部署**
  &emsp; &emsp; *有执行过的步骤无需重复进行， 每步序号对应于"源码开发/部署步骤"节*  
@@ -148,10 +148,10 @@ cppcloud                          -- 根目录
        >`cd web_py; sudo make install;`
 
 ## **快速部署**
-&emsp; 本产品可以通过docker快速部署*c++部分*(cppcloud_serv cpp_sdk)，以及通过pypi快速部署*python部分*(python_sdk web_py)
+&emsp; 本产品可以通过docker快速部署*c++部分*(cppcloud_serv cpp_sdk)，以及通过pip快速部署*python部分*(python_sdk web_py)
 
 + c++部分（前提是先[安装docker](https://baijiahao.baidu.com/s?id=1609874072198430253&wfr=spider&for=pc)）
-  > 本产品c++部分为方便大众开发者使用，作者已上传至dockerhup，通过以下命令获取到;  
+  > 本产品c++部分为方便大众开发者使用，作者已上传至dockerhub，通过以下命令获取到;  
  &emsp; &emsp; `docker pull valueho/cppcloud:1`  
    
   > 运行容器  

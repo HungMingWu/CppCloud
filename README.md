@@ -89,7 +89,7 @@ cppcloud                          -- 根目录
 
 
 ## **架构图示**
-![图片加载中](https://images.gitee.com/uploads/images/2019/0304/212431_44beb9b0_2114904.png "summery.png")
+![图片加载中](https://images.gitee.com/uploads/images/2019/0305/113452_fb25d335_2114904.png "summery.png")
 
 > ### **服务端Serv**
 >> &emsp; CppCloud的核心部分，源码在server目录下，c++实现，提供分布式服务的服务注册、发现、管理等功能，相当于SpringCloud里的Eureka Server的角色（java的同学比较了解）；对外提供tcp接口，支持多个Serv集群提高可靠性；cppcloud_serv内部采用epoll异步io复用([Reactor模型](https://www.cnblogs.com/linganxiong/p/5583415.html))，性能比拟nginx/libevent。&emsp; 

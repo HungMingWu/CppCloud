@@ -16,7 +16,7 @@ LIBCOMMON=../common
 
 INCLUDEDIR+=-I.. -I$(LIBCOMMON) 
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++11 -fPIC
+CXXFLAGS=-Wall -g -std=c++17 -fPIC
 #AR=ar rcs
 
 CPPFLAGS+=$(CONF_HEAD_INC) $(INCLUDEDIR)
@@ -59,5 +59,5 @@ cleanall:
 	@rm .depend
 
 depend: $(SRC)
-	$(CXX) -MM -std=c++11 $< $(INCLUDEDIR) $^ > .depend
+	$(CXX) -MM -std=c++17 $< $(INCLUDEDIR) $^ > .depend
 

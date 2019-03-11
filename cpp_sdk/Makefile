@@ -20,7 +20,7 @@ LDCONFIG_PATH:=/etc/ld.so.conf.d/cppcloud.conf
 
 INCLUDEDIR+=-I.. -I$(LIBCOMMON) 
 CXX=g++
-CXXFLAGS=-Wall -g -std=c++11 -fPIC $(CONF_HEAD_INC) $(INCLUDEDIR)
+CXXFLAGS=-Wall -g -std=c++17 -fPIC $(CONF_HEAD_INC) $(INCLUDEDIR)
 #AR=ar rcs
 
 LDFLAGS=-Wall -g 
@@ -62,7 +62,7 @@ clean:
 	@rm -rf $(TARGET) $(OBJ) $(COMMON_OBJ) $(LINKNAME) $(TSONAME) $(SAMPLES)
 
 depend: $(SRC)
-	$(CXX) -MM -std=c++11 $< $(INCLUDEDIR) $^ > .depend
+	$(CXX) -MM -std=c++17 $< $(INCLUDEDIR) $^ > .depend
 
 help:
 	@echo "Command                     Target/Description"
@@ -77,17 +77,17 @@ help:
 
 ## sample make
 sample_conf: sample_conf.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_prvd: sample_prvd.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_tcp_invk: sample_tcp_invk.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_http_invk: sample_http_invk.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 agent_prvd: agent_prvd.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_prvd0: sample_prvd0.cpp
-	g++ -Wall -g -std=c++11 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 
 install:
 	@install -d $(INSTALLDIR)

@@ -45,8 +45,6 @@ class Queue
     //struct timeval m_basetime; // 毫秒计时起点
     map< struct timeval, deque<T> > m_dely_task;
     struct timeval m_near_time;
-    typedef typename map< struct timeval,deque<T> >::iterator DTASK_ITER;
-    typedef typename deque<T>::iterator DLIST_ITER;
 
 public:
     bool append_delay(const T &pNode, int delay_ms) // 加入延后触发的任务
@@ -66,7 +64,7 @@ public:
         pthread_mutex_lock(&m_mutex);
         if (!m_dely_task.empty())
         {
-            DTASK_ITER it = m_dely_task.begin();
+            auto it = m_dely_task.begin();
             bnotify = (destime < it->first);
         }
         
@@ -156,10 +154,10 @@ private:
         {
             struct timeval now;
             gettimeofday(&now, NULL);
-            DTASK_ITER it = m_dely_task.begin();
+            auto it = m_dely_task.begin();
             if (it->first < now) // 延时时间已到
             {
-                DLIST_ITER lsit = it->second.begin();
+                auto lsit = it->second.begin();
                 for (; lsit != it->second.end(); ++lsit)
                 {
                     if (got)
@@ -239,8 +237,7 @@ public:
 		//cout << "调用删除析构\n";
 		
 		pthread_mutex_lock(&m_mutex);
-		typename storage::iterator iter;
-		for ( iter = m_list.begin(); iter !=m_list.end(); iter++ )
+		for ( auto iter = m_list.begin(); iter !=m_list.end(); iter++ )
 		{
 			if(NULL != *iter)
 			delete ( *iter );
@@ -249,14 +246,14 @@ public:
 		
 	}
     void insert(int index,  const T &pNode)
-	{
+    {
         pthread_mutex_lock(&m_mutex);
-        typename storage::iterator iter = m_list.begin();
+        auto iter = m_list.begin();
         advance( iter, index);
         m_list.insert( iter, pNode);
-		pthread_cond_signal(&m_cond);
+        pthread_cond_signal(&m_cond);
         pthread_mutex_unlock(&m_mutex);
-	}
+    }
 	
     bool append(const T &pNode, int nMaxWaitSeconds = 0)
     {
@@ -359,10 +356,10 @@ public:
     void remove( const T& pNode )
     {
         pthread_mutex_lock(&m_mutex);
-        DTASK_ITER it = m_dely_task.begin();
+        auto it = m_dely_task.begin();
         for (; it != m_dely_task.end(); ++it)
         {
-            DLIST_ITER lsit = it->second.begin();
+            auto lsit = it->second.begin();
             for (; lsit != it->second.end(); )
             {
                 if (pNode == *lsit)
@@ -376,36 +373,34 @@ public:
             }
         }
 
-        typename storage::iterator iter;
-		for ( iter = m_list.begin(); iter !=m_list.end(); )
-		{
-			if(pNode != *iter)
-			{
+        for ( auto iter = m_list.begin(); iter !=m_list.end(); )
+        {
+            if(pNode != *iter)
+            {
                 iter = m_list.erase(iter);
             }
             else
             {
                 ++iter;
             }
-		}
-		pthread_mutex_unlock(&m_mutex);
+        }
+        pthread_mutex_unlock(&m_mutex);
     }
 
-	void each(FUNC func, bool rmall)
+    void each(FUNC func, bool rmall)
     {
-        DTASK_ITER it;
-		pthread_mutex_lock(&m_mutex);
+        pthread_mutex_lock(&m_mutex);
 		
-		typename storage::iterator iter = m_list.begin();
-		for(; iter != m_list.end(); iter++)
-		{
-			(*func)(*iter);
-		}
+        auto iter = m_list.begin();
+        for(; iter != m_list.end(); iter++)
+        {
+	    (*func)(*iter);
+        }
 
-        it = m_dely_task.begin();
+        auto it = m_dely_task.begin();
         for (; it != m_dely_task.end(); ++it)
         {
-            DLIST_ITER lsit = it->second.begin();
+            auto lsit = it->second.begin();
             for (; lsit != it->second.end(); ++lsit)
             {
                 T t = *lsit;
@@ -419,10 +414,10 @@ public:
             m_dely_task.clear();
         }
 		
-		pthread_mutex_unlock(&m_mutex);
-		return ;
+        pthread_mutex_unlock(&m_mutex);
+        return;
 		
-	}
+    }
 
     
 protected:
@@ -439,8 +434,6 @@ protected:
 	//bool m_bIsPtr;
     //存放数据 的列表
     storage  m_list;
-      //元素指针
-    typedef typename storage::iterator NODE_ITEM;
     //线程锁
 	pthread_mutex_t m_mutex;
 	pthread_cond_t  m_cond;

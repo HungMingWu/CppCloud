@@ -33,10 +33,10 @@ class HocfgMgr
 	~HocfgMgr( void );
 
 public:
-	static int OnSetConfigHandle( void* ptr, unsigned cmdid, void* param );
-	static int OnGetAllCfgName( void* ptr, unsigned cmdid, void* param );
-	static int OnCMD_HOCFGNEW_REQ( void* ptr, unsigned cmdid, void* param );
-	static int OnCMD_BOOKCFGCHANGE_REQ( void* ptr, unsigned cmdid, void* param );
+	int OnSetConfigHandle( void* ptr, unsigned cmdid, void* param );
+	int OnGetAllCfgName( void* ptr, unsigned cmdid, void* param );
+	int OnCMD_HOCFGNEW_REQ( void* ptr, unsigned cmdid, void* param );
+	int OnCMD_BOOKCFGCHANGE_REQ( void* ptr, unsigned cmdid, void* param );
 
 public:
 	int init( const string& conf_root );
@@ -71,7 +71,6 @@ private:
 	string m_cfgpath;
 	map<string, AppConfig*> m_Allconfig;
 	mutable int m_seqid;
-	static HocfgMgr* This;
 };
 
 #endif

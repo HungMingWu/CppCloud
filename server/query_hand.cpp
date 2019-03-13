@@ -14,7 +14,7 @@
 #include "climanage.h"
 
 HEPCLASS_IMPL_FUNCX_BEG(QueryHand)
-HEPCLASS_IMPL_FUNCX_MORE(QueryHand, ProcessOne)
+HEPCLASS_IMPL_FUNCX_MORE_S(QueryHand, ProcessOne)
 HEPCLASS_IMPL_FUNCX_END(QueryHand)
 
 static const char g_resp_strbeg[] = "{ \"code\": 0, \"desc\": \"success\", \"data\": ";

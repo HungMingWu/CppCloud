@@ -24,10 +24,10 @@ class ProviderMgr
 	~ProviderMgr( void );
 
 public:
-	static int OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param ); // 服务注册/更新
-	static int OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param ); // 服务发现
-	static int OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param ); // 服务展示
-	static int OnCMD_SVRSTAT_REQ( void* ptr, unsigned cmdid, void* param ); // 服务统计上报
+	int OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param ); // 服务注册/更新
+	int OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param ); // 服务发现
+	int OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param ); // 服务展示
+	int OnCMD_SVRSTAT_REQ( void* ptr, unsigned cmdid, void* param ); // 服务统计上报
 
 	static void OnCliCloseHandle( CliBase* cli );
 	void onCliCloseHandle( CliBase* cli );
@@ -50,7 +50,6 @@ private:
 private:
 	map<string, ServiceProvider*> m_providers;
 	int m_seqid;
-	static ProviderMgr* This;
 };
 
 #endif

@@ -67,8 +67,6 @@ private:
     int m_delayTimeSec;
     
     map<string, CountEntry> m_stat;
-
-    static SvrStat* This;
 };
 
 #endif

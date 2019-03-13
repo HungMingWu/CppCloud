@@ -21,7 +21,7 @@ public:
     RouteExchage(void);
     static void Init( int my_svrid );
 
-    static int TransMsg( void* ptr, unsigned cmdid, void* param );
+    static int STransMsg( void* ptr, unsigned cmdid, void* param );
 
     static int PostToCli( const string& jobj, unsigned cmdid, unsigned seqid,
         int toSvr = 0, int fromSvr = 0, int bto = 0 );

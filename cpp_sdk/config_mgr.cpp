@@ -10,13 +10,9 @@
 
 static RWLock g_rwLock0;
 
-ConfigMgr* ConfigMgr::This = NULL;
-
-
 ConfigMgr::ConfigMgr( void )
 {
     m_changeCB = NULL;
-    This = this;
 }
 ConfigMgr::~ConfigMgr( void )
 {
@@ -76,9 +72,11 @@ int ConfigMgr::initLoad( const string& confName )
         
         if (!cbOk)
         {
-            CloudApp::Instance()->setNotifyCB("cfg_change", OnCMD_EVNOTIFY_REQ); // 配置变化通知
-            CloudApp::Instance()->setNotifyCB(RECONNOK_NOTIFYKEY, OnReconnectNotifyCB); // 断开恢复通知
-            CloudApp::Instance()->addCmdHandle(CMD_GETCONFIG_RSP, OnCMD_GETCONFIG_RSP); // 配置下发响应
+            CloudApp::Instance()->setNotifyCB("cfg_change", [this](void *param) { return OnCMD_EVNOTIFY_REQ(param); }); // 配置变化通知
+            CloudApp::Instance()->setNotifyCB(RECONNOK_NOTIFYKEY, [this](void *param) { return OnReconnectNotifyCB(param); }); // 断开恢复通知
+            CloudApp::Instance()->addCmdHandle(CMD_GETCONFIG_RSP, [this](void* ptr, unsigned cmdid, void* param) {
+		return OnCMD_GETCONFIG_RSP(ptr, cmdid, param);
+            }); // 配置下发响应
             cbOk = true;
         }
 
@@ -108,7 +106,7 @@ int ConfigMgr::initLoad( const string& confName )
 
 int ConfigMgr::OnCMD_EVNOTIFY_REQ( void* ptr )
 {
-    return This->onCMD_EVNOTIFY_REQ(ptr);
+    return onCMD_EVNOTIFY_REQ(ptr);
 }
 int ConfigMgr::onCMD_EVNOTIFY_REQ( void* ptr )
 {
@@ -138,7 +136,7 @@ int ConfigMgr::onCMD_EVNOTIFY_REQ( void* ptr )
 
 int ConfigMgr::OnCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param )
 {
-    return This->onCMD_GETCONFIG_RSP(ptr, cmdid, param);
+    return onCMD_GETCONFIG_RSP(ptr, cmdid, param);
 }
 int ConfigMgr::onCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param )
 {

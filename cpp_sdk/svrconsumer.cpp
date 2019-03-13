@@ -8,8 +8,6 @@
 #include "svr_stat.h"
 #include "cloudapp.h"
 
-SvrConsumer* SvrConsumer::This = NULL;
-
 void SvrConsumer::SvrItem::rmBySvrid( int svrid, int prvdid )
 {
     vector<svr_item_t>::iterator it = svrItms.begin();
@@ -59,7 +57,6 @@ svr_item_t* SvrConsumer::SvrItem::randItem( void )
 
 SvrConsumer::SvrConsumer( void )
 {
-    This = this;
     m_refresh_sec = 10*60;
     m_invoker_default_tosec = 3;
     m_inqueue = false;
@@ -72,12 +69,12 @@ SvrConsumer::~SvrConsumer( void )
 
 int SvrConsumer::OnCMD_SVRSEARCH_RSP( void* ptr, unsigned cmdid, void* param )
 {
-    return This->onCMD_SVRSEARCH_RSP(ptr, cmdid, param);
+    return onCMD_SVRSEARCH_RSP(ptr, cmdid, param);
 }
 
 int SvrConsumer::OnCMD_EVNOTIFY_REQ( void* ptr ) // provider 下线通知
 {
-    return This->onCMD_EVNOTIFY_REQ(ptr);
+    return onCMD_EVNOTIFY_REQ(ptr);
 }
 
 int SvrConsumer::onCMD_SVRSEARCH_RSP( void* ptr, unsigned cmdid, void* param )
@@ -155,8 +152,10 @@ int SvrConsumer::init( const string& svrList )
     if (0 == ret)
     {
         // srand(time(NULL))
-        CloudApp::Instance()->setNotifyCB("provider_down", OnCMD_EVNOTIFY_REQ);
-        ret = CloudApp::Instance()->addCmdHandle(CMD_SVRSEARCH_RSP, OnCMD_SVRSEARCH_RSP)? 0 : -111;
+        auto regfunc = [this](auto&& ...params) { return OnCMD_EVNOTIFY_REQ(std::forward<decltype(params)>(params)...); };
+        auto cmdfunc = [this](auto&& ...params) { return OnCMD_SVRSEARCH_RSP(std::forward<decltype(params)>(params)...); };
+        CloudApp::Instance()->setNotifyCB("provider_down", std::move(regfunc));
+        ret = CloudApp::Instance()->addCmdHandle(CMD_SVRSEARCH_RSP, std::move(cmdfunc)) ? 0 : -111;
         appendTimerq(false);
     }
 

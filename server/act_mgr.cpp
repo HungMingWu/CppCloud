@@ -8,16 +8,13 @@
 #include "climanage.h"
 
 HEPCLASS_IMPL_FUNCX_BEG(Actmgr)
-HEPCLASS_IMPL_FUNCX_MORE(Actmgr, NotifyCatch)
 HEPCLASS_IMPL_FUNCX_END(Actmgr)
-
-Actmgr* Actmgr::This = NULL;
 
 Actmgr::Actmgr(void)
 {
-	This = this;
 	m_opLogSize = CLIOPLOG_SIZE;
 	m_pchildren = CliMgr::Instance()->getAllChild();
+	HEPCLASS_IMPL_FUNCX_MORE(Actmgr, NotifyCatch)
 }
 Actmgr::~Actmgr(void)
 {
@@ -241,7 +238,7 @@ int Actmgr::NotifyCatch( void* ptr, unsigned cmdid, void* param )
 	RJSON_VGETINT_D(svrid, CONNTERID_KEY, &doc);
 	RJSON_VGETINT_D(to, ROUTE_MSG_KEY_TO, &doc);
 
-	This->appendCliOpLog( _F("NOTIFY| notify=%s| target=%d| reqmsg=%s", 
+	appendCliOpLog( _F("NOTIFY| notify=%s| target=%d| reqmsg=%s",
 			notify.c_str(), to>0? to: svrid, body) );
 
 	return 1;

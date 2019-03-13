@@ -21,11 +21,11 @@ class ConfigMgr
 {
     SINGLETON_CLASS2(ConfigMgr)
 public:
-	static int OnCMD_EVNOTIFY_REQ( void* ptr );
-	int onCMD_EVNOTIFY_REQ( void* ptr );
-	static int OnCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param );
-	int onCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param );
-    static int OnReconnectNotifyCB( void* param );
+    int OnCMD_EVNOTIFY_REQ( void* ptr );
+    int onCMD_EVNOTIFY_REQ( void* ptr );
+    int OnCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param );
+    int onCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param );
+    int OnReconnectNotifyCB( void* param );
     int onReconnectNotifyCB( void* param );
 
     ConfigMgr( void );
@@ -65,7 +65,6 @@ private:
     string m_mainConfName; // 主配置文件名
     map<string, ConfJson*> m_jcfgs;
     CONF_CHANGE_CB m_changeCB;
-    static ConfigMgr* This;
 
     // 缓存
     map<string, string> m_cacheStr;

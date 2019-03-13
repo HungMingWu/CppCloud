@@ -3,8 +3,6 @@
 #include "cloud/switchhand.h"
 #include "cloudapp.h"
 
-SvrStat* SvrStat::This = NULL;
-
 string SvrStat::CountEntry::jsonStr( void ) const
 {
     bool valid = false;

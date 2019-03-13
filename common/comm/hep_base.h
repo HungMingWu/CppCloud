@@ -10,6 +10,7 @@ Modification :
 #define _HEP_BASE_H_
 #include <string>
 #include <stdarg.h>
+#include <functional>
 #include "public.h"
 #include "i_taskrun.h"
 
@@ -60,8 +61,15 @@ struct HEpEvFlag
     static struct Reg##clsname {\
         Reg##clsname(){
 
-#define HEPCLASS_IMPL_FUNCX_MORE(clsname, static_method_name);    \
-    HEpBase::RegisterFunc(#clsname "::" #static_method_name, &clsname::static_method_name);
+#define HEPCLASS_IMPL_FUNCX_MORE(clsname, member_method_name);    \
+    HEpBase::RegisterFunc(#clsname "::" #member_method_name, \
+		    std::bind(&clsname::member_method_name, this, \
+			    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+#define HEPCLASS_IMPL_FUNCX_MORE_S(clsname, static_method_name);    \
+    HEpBase::RegisterFunc(#clsname "::" #static_method_name, \
+                    std::bind(&clsname::static_method_name, \
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 #define HEPCLASS_IMPL_FUNCX_END(clsname)    \
     }} g_reg_##clsname;
@@ -99,7 +107,7 @@ enum NOTIFY_EVENT_TYPE
 class HEpBase: public ITaskRun2
 {
  public:
-    typedef int (*ProcOneFunT)(void*, unsigned, void*);
+    using ProcOneFunT = std::function<int(void*, unsigned, void*)>;
     static void RegisterClass(const char* regname, HEpBase* stdptr);
     static void RegisterFunc(const char* regname, ProcOneFunT func);
     static ProcOneFunT GetProcFunc(const char* regname);

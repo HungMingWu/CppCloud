@@ -8,13 +8,14 @@ Modification :
 -------------------------------------------------------------------------*/
 #ifndef _CLOUDAPP_H_
 #define _CLOUDAPP_H_
+#include <functional>
 #include "comm/public.h"
 #include "iohand.h"
 #include "synchand.h"
 
 using namespace std;
 
-typedef int (*NotifyCBFunc)( void* param );
+using NotifyCBFunc = std::function<int(void*)>;
 
 class CloudApp: public IOHand
 {
@@ -24,10 +25,10 @@ public:
 	CloudApp();
 
 	// ****** message handle begin *******
-	static int OnCMD_WHOAMI_RSP( void* ptr, unsigned cmdid, void* param );
-	static int OnSyncMsg( void* ptr, unsigned cmdid, void* param );
-	static int OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param );
-	static int OnCMD_KEEPALIVE_REQ( void* ptr, unsigned cmdid, void* param );
+	int OnCMD_WHOAMI_RSP( void* ptr, unsigned cmdid, void* param );
+	int OnSyncMsg( void* ptr, unsigned cmdid, void* param );
+	int OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param );
+	int OnCMD_KEEPALIVE_REQ( void* ptr, unsigned cmdid, void* param );
 	static int OnShowMsg( void* ptr, unsigned cmdid, void* param );
 	//static int OnCMD_WEBCTRL_REQ( void* ptr, unsigned cmdid, void* param );
 	
@@ -94,8 +95,6 @@ private:
 
 	SyncHand m_syncHand;
 	map<string, NotifyCBFunc> m_ntfCB; // 未做多个相同事件消费
-
-	static CloudApp* This;
 };
 
 #endif

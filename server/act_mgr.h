@@ -27,7 +27,7 @@ class Actmgr
     enum { CLIOPLOG_SIZE = 200 };
 
 public:
-    static int NotifyCatch( void* ptr, unsigned cmdid, void* param );
+    int NotifyCatch( void* ptr, unsigned cmdid, void* param );
 
 public:
     // 获取连接中的客户端属性信息
@@ -61,8 +61,6 @@ protected:
     map<int, string> m_closeLog; // 记录掉线了的客户机信息
     list<string> m_cliOpLog; // 客户机的操作行为记录
     int m_opLogSize;
-
-    static Actmgr* This;
 };
 
 #endif

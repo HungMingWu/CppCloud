@@ -13,8 +13,8 @@
 #include "provider_manage.h"
 
 HEPCLASS_IMPL_FUNCX_BEG(BroadCastCli)
-HEPCLASS_IMPL_FUNCX_MORE(BroadCastCli, TransToAllPeer)
-HEPCLASS_IMPL_FUNCX_MORE(BroadCastCli, OnBroadCMD)
+HEPCLASS_IMPL_FUNCX_MORE_S(BroadCastCli, TransToAllPeer)
+HEPCLASS_IMPL_FUNCX_MORE_S(BroadCastCli, OnBroadCMD)
 HEPCLASS_IMPL_FUNCX_END(BroadCastCli)
 
 #define RouteExException_IFTRUE_EASY(cond, resonstr) \

@@ -10,19 +10,16 @@
 #include "cloud/const.h"
 
 HEPCLASS_IMPL_FUNCX_BEG(ProviderMgr)
-HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRREGISTER_REQ)
-HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSEARCH_REQ)
-HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSHOW_REQ)
-HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSTAT_REQ)
 HEPCLASS_IMPL_FUNCX_END(ProviderMgr)
-
-ProviderMgr* ProviderMgr::This = ProviderMgr::Instance();
 
 ProviderMgr::ProviderMgr( void )
 {
 	CliMgr::Instance()->addCliCloseConsumerFunc(OnCliCloseHandle);
-	This = this;
 	m_seqid = 0;
+	HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRREGISTER_REQ)
+	HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSEARCH_REQ)
+	HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSHOW_REQ)
+	HEPCLASS_IMPL_FUNCX_MORE(ProviderMgr, OnCMD_SVRSTAT_REQ)
 }
 
 ProviderMgr::~ProviderMgr( void )
@@ -108,7 +105,7 @@ int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 		cli = iohand;
 		svrid = iohand->getIntProperty(CONNTERID_KEY);
 		Rjson::SetObjMember(CONNTERID_KEY, svrid, &doc);
-		BroadCastCli::Instance()->toWorld(doc, CMD_SVRREGISTER2_REQ, ++This->m_seqid, false);
+		BroadCastCli::Instance()->toWorld(doc, CMD_SVRREGISTER2_REQ, ++this->m_seqid, false);
 	}
 
 	int prvdid = 0;
@@ -118,18 +115,18 @@ int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 
 	int urlChange = CheckValidUrlProtocol(cli, &doc, regname2, seqid);
 	int enableBeforValue = cli->getIntProperty(regname2 + ":enable");
-	ret = This->setProviderProperty(cli, &doc, regname2);
+	ret = this->setProviderProperty(cli, &doc, regname2);
 	int enableAfterValue = cli->getIntProperty(regname2 + ":enable");
 	bool enableChange = (1 == enableBeforValue && 0 == enableAfterValue);
-	bool isNewPrvd = !This->hasProviderItem(cli, regname, prvdid);
+	bool isNewPrvd = !this->hasProviderItem(cli, regname, prvdid);
 
 	if (0 == ret && (urlChange || enableChange)) // 禁用服务时触发
 	{
 		// 通知各个订阅者
-		This->notify2Invoker(regname, svrid, prvdid);
+		this->notify2Invoker(regname, svrid, prvdid);
 	}
 
-	This->updateProvider(cli, regname, prvdid);
+	this->updateProvider(cli, regname, prvdid);
 	string resp = _F("{\"code\": 0, \"desc\": \"reg %s result %d\"}", regname2.c_str(), ret);
 	iohand->sendData(CMD_SVRREGISTER_RSP, seqid, resp.c_str(), resp.length(), true);
 
@@ -243,7 +240,7 @@ int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 	}
 
 	string resp("{\"data\": ");
-	int ret = This->getOneProviderJson(resp, regname, idc, rack, version, limit);
+	int ret = this->getOneProviderJson(resp, regname, idc, rack, version, limit);
 	resp.append(",");
 	StrParse::PutOneJson(resp, "count", ret, true);
 	StrParse::PutOneJson(resp, "desc", _F("total resp %d providers", ret), true);
@@ -271,7 +268,7 @@ int ProviderMgr::OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param )
 	string resp("{");
 
 	resp.append("\"data\":");
-	count = ball? This->getAllJson(resp) : This->getOneProviderJson(resp, regname);
+	count = ball? this->getAllJson(resp) : this->getOneProviderJson(resp, regname);
 	resp.append(",");
 	StrParse::PutOneJson(resp, "len", count, false);
 	resp.append("}");
@@ -314,7 +311,7 @@ int ProviderMgr::OnCMD_SVRSTAT_REQ( void* ptr, unsigned cmdid, void* param )
 				if (NULL == provider) continue;
 			}
 
-			ServiceProvider* svrPrvder = This->getProviderPtr(regname);
+			ServiceProvider* svrPrvder = this->getProviderPtr(regname);
 			if (svrPrvder)
 			{
 				svrPrvder->setStat(provider, prvdid, pvd_ok, pvd_ng, ivk_dok, ivk_dng);

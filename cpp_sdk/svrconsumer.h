@@ -39,8 +39,8 @@ class SvrConsumer : public ITaskRun2
     ~SvrConsumer( void );
 
 public:
-    static int OnCMD_SVRSEARCH_RSP( void* ptr, unsigned cmdid, void* param );
-    static int OnCMD_EVNOTIFY_REQ( void* ptr ); // provider 下线通知
+    int OnCMD_SVRSEARCH_RSP( void* ptr, unsigned cmdid, void* param );
+    int OnCMD_EVNOTIFY_REQ( void* ptr ); // provider 下线通知
 
     int onCMD_SVRSEARCH_RSP( void* ptr, unsigned cmdid, void* param );
     int onCMD_EVNOTIFY_REQ( void* ptr ); // provider 下线通知
@@ -77,8 +77,6 @@ private:
     
     RWLock m_rwLock;
     bool m_inqueue;
-
-    static SvrConsumer* This;
 };
 
 #endif

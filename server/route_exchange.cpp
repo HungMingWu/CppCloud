@@ -9,7 +9,7 @@
 
 
 HEPCLASS_IMPL_FUNCX_BEG(RouteExchage)
-HEPCLASS_IMPL_FUNCX_MORE(RouteExchage, TransMsg)
+HEPCLASS_IMPL_FUNCX_MORE_S(RouteExchage, STransMsg)
 HEPCLASS_IMPL_FUNCX_END(RouteExchage)
 
 int RouteExchage::s_my_svrid = 0;
@@ -106,7 +106,7 @@ int RouteExchage::AdjustRoutMsg( Document& doc, int fromSvr, int* toSvr, int* bt
     return ret;
 }
 
-int RouteExchage::TransMsg( void* ptr, unsigned cmdid, void* param )
+int RouteExchage::STransMsg( void* ptr, unsigned cmdid, void* param )
 {
 	CMDID2FUNCALL_BEGIN
 	Document doc;

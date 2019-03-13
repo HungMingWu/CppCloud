@@ -11,7 +11,6 @@
 #include "rapidjson/json.hpp"
 #include <sys/epoll.h>
 
-CloudApp* CloudApp::This = NULL;
 HEPMUTICLASS_IMPL(CloudApp, CloudApp, IOHand)
 
 CloudApp::CloudApp()
@@ -25,7 +24,6 @@ CloudApp::CloudApp()
 	m_inqueue = false;
 	m_existLink = false;
 	m_inEpRun = false;
-	This = this;
 }
 
 // 读出配置文件, 构造出连接PeerServ的对象
@@ -64,9 +62,9 @@ int CloudApp::init( int epfd, const string& svrhost_port, const string& appname 
 
 		ERRLOG_IF1(ret, "CLOUDAPPSEND| msg=tell whoami to %s fail| ret=%d", m_rhost.c_str(), ret);
 
-		addCmdHandle(CMD_WHOAMI_RSP, OnCMD_WHOAMI_RSP);
-		addCmdHandle(CMD_KEEPALIVE_REQ, OnCMD_KEEPALIVE_REQ);
-		addCmdHandle(CMD_EVNOTIFY_REQ, OnCMD_EVNOTIFY_REQ);
+		addCmdHandle(CMD_WHOAMI_RSP, [this](auto&& ...params) { return OnCMD_WHOAMI_RSP(std::forward<decltype(params)>(params)...); });
+		addCmdHandle(CMD_KEEPALIVE_REQ, [this](auto&& ...params) { return OnCMD_KEEPALIVE_REQ(std::forward<decltype(params)>(params)...); });
+		addCmdHandle(CMD_EVNOTIFY_REQ, [this](auto&& ...params) { return OnCMD_EVNOTIFY_REQ(std::forward<decltype(params)>(params)...); });
 		addCmdHandle(CMD_SVRREGISTER_RSP, OnShowMsg);
 		addCmdHandle(CMD_BOOKCFGCHANGE_RSP, OnShowMsg);
 		//addCmdHandle(CMD_WEBCTRL_REQ, OnCMD_WEBCTRL_REQ);
@@ -249,7 +247,7 @@ int CloudApp::OnCMD_WHOAMI_RSP( void* ptr, unsigned cmdid, void* param )
 	IOBuffItem* iBufItem = (IOBuffItem*)param; 
 	//unsigned seqid = iBufItem->head()->seqid; 
 	string body = iBufItem->body();
-	int ret = This->onCMD_WHOAMI_RSP(body);
+	int ret = onCMD_WHOAMI_RSP(body);
 	return ret;
 }
 
@@ -258,7 +256,7 @@ int CloudApp::OnCMD_KEEPALIVE_REQ( void* ptr, unsigned cmdid, void* param )
 	IOBuffItem* iBufItem = (IOBuffItem*)param; 
 	unsigned seqid = iBufItem->head()->seqid;
 	LOGDEBUG("CMD_KEEPALIVE| msg=kv resp");
-	return This->sendData(CMD_KEEPALIVE_RSP, seqid, "", 0, true);	
+	return sendData(CMD_KEEPALIVE_RSP, seqid, "", 0, true);	
 }
 
 int CloudApp::onCMD_WHOAMI_RSP( string& whoamiResp )
@@ -290,7 +288,7 @@ int CloudApp::onCMD_WHOAMI_RSP( string& whoamiResp )
 
 int CloudApp::OnSyncMsg( void* ptr, unsigned cmdid, void* param )
 {
-	return This->onSyncMsg(ptr, cmdid, param);
+	return onSyncMsg(ptr, cmdid, param);
 }
 int CloudApp::onSyncMsg( void* ptr, unsigned cmdid, void* param )
 {
@@ -315,7 +313,7 @@ int CloudApp::OnShowMsg( void* ptr, unsigned cmdid, void* param )
 
 int CloudApp::OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
 {
-    return This->onCMD_EVNOTIFY_REQ(ptr, cmdid, param);
+    return onCMD_EVNOTIFY_REQ(ptr, cmdid, param);
 }
 int CloudApp::onCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
 {
@@ -592,7 +590,8 @@ int CloudApp::syncRequest( string& resp, unsigned cmdid, const string& reqmsg, i
 	unsigned seqid = ++m_seqid;
 	unsigned rspid = (cmdid | CMDID_MID);
 
-	bool badd = addCmdHandle(rspid, OnSyncMsg, seqid);
+	auto func = [this](auto&& ...params) { return OnSyncMsg(std::forward<decltype(params)>(params)...); };
+	bool badd = addCmdHandle(rspid, func, seqid);
 	ERRLOG_IF1RET_N(!badd, -80, "SYNCREQ| msg=addCmdHandle fail| cmdid=0x%x| seqid=%u", cmdid, seqid);
 	
 	do

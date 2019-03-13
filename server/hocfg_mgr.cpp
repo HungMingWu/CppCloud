@@ -22,17 +22,14 @@
 
 
 HEPCLASS_IMPL_FUNCX_BEG(HocfgMgr)
-HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnSetConfigHandle)
-HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnGetAllCfgName)
-HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnCMD_HOCFGNEW_REQ)
-HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnCMD_BOOKCFGCHANGE_REQ)
 HEPCLASS_IMPL_FUNCX_END(HocfgMgr)
-
-HocfgMgr* HocfgMgr::This = NULL;
 
 HocfgMgr::HocfgMgr( void ): m_seqid(0)
 {
-    This = this;
+    HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnSetConfigHandle)
+    HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnGetAllCfgName)
+    HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnCMD_HOCFGNEW_REQ)
+    HEPCLASS_IMPL_FUNCX_MORE(HocfgMgr, OnCMD_BOOKCFGCHANGE_REQ)
 }
 
 HocfgMgr::~HocfgMgr( void )
@@ -342,7 +339,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
 
     if (NULL == contents || contents->IsNull()) // 删除操作
     {
-        This->remove(filename, mtime); // xx清除内存xx, 同时unlink磁盘文件
+        this->remove(filename, mtime); // xx清除内存xx, 同时unlink磁盘文件
         desc = _F("remove %s success", filename.c_str());
         Actmgr::Instance()->appendCliOpLog(
             _F("CONFDEL| filename=%s| mtime=%d(%s)", 
@@ -350,12 +347,12 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
     }
     else
     {
-        string fullfilename = This->m_cfgpath + filename; // 文件名要加上本地路径来存储
-        ret = This->parseConffile(fullfilename, Rjson::ToString(contents), mtime);
+        string fullfilename = this->m_cfgpath + filename; // 文件名要加上本地路径来存储
+        ret = this->parseConffile(fullfilename, Rjson::ToString(contents), mtime);
         desc = (0==ret)? "success": "fail";
         if (0 == ret)
         {
-            ret = This->save2File(fullfilename, contents);
+            ret = this->save2File(fullfilename, contents);
         }
 
         Actmgr::Instance()->appendCliOpLog(
@@ -364,7 +361,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
             iohand->m_idProfile.c_str(), desc.c_str()) );
     }
 
-    This->notifyChange(filename, mtime);
+    this->notifyChange(filename, mtime);
     if (CMD_SETCONFIG_REQ == cmdid)
     {
         string resp = _F("{\"code\": %d, \"mtime\":%d, \"desc\": \"%s\"}", 
@@ -426,7 +423,7 @@ int HocfgMgr::OnGetAllCfgName( void* ptr, unsigned cmdid, void* param )
     IOBuffItem* iBufItem = (IOBuffItem*)param; 
     unsigned seqid = iBufItem->head()->seqid;
     
-    string resp = This->getAllCfgNameJson();
+    string resp = this->getAllCfgNameJson();
     iohand->sendData(CMD_GETCFGNAME_RSP, seqid, resp.c_str(), resp.length(), true);
     return 0;
 }
@@ -551,7 +548,7 @@ int HocfgMgr::OnCMD_HOCFGNEW_REQ( void* ptr, unsigned cmdid, void* param )
         string fname;
         if (0 == Rjson::GetStr(fname, i, arrdoc))
         {
-            AppConfig* pcfg = This->getConfigByName(fname);
+            AppConfig* pcfg = this->getConfigByName(fname);
             if (NULL == pcfg) continue;
 
             // 响应对应于 HocfgMgr::OnSetConfigHandle 消费
@@ -583,14 +580,14 @@ int HocfgMgr::OnCMD_BOOKCFGCHANGE_REQ( void* ptr, unsigned cmdid, void* param )
     RJSON_VGETINT_D(incbase, HOCFG_INCLUDEBASE_KEY, &doc);
     RJSON_VGETSTR_D(file_pattern, HOCFG_FILENAME_KEY, &doc);
 
-    NormalExceptionOn_IFTRUE(file_pattern.empty()||NULL==This->getConfigByName(file_pattern), 
+    NormalExceptionOn_IFTRUE(file_pattern.empty()||NULL==this->getConfigByName(file_pattern),
             420, CMD_BOOKCFGCHANGE_RSP, seqid, string("no file=" + file_pattern));
         
     string baseStr;
     int ret = 0;
     vector<string> vecBase;
 
-    if (1 == incbase && This->getBaseConfigName(baseStr, file_pattern))
+    if (1 == incbase && this->getBaseConfigName(baseStr, file_pattern))
     {
         ret = StrParse::SpliteStr(vecBase, baseStr, ' ');
     }

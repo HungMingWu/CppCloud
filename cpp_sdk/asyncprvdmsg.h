@@ -9,9 +9,9 @@ Modification :
 #ifndef _ASYNC_PRVD_MSG_H_
 #define _ASYNC_PRVD_MSG_H_
 #include <list>
+#include <mutex>
 #include <string>
 #include "msgprop.h"
-#include "comm/lock.h"
 #include "comm/i_taskrun.h"
 
 using std::string;
@@ -33,7 +33,7 @@ public:
 
 private:
     std::list<AMsgItem> m_msgQueue;
-    ThreadLock m_lock;
+    std::mutex m_lock;
 };
 
 #endif

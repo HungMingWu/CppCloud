@@ -3,7 +3,6 @@
 #include "comm/hep_base.h"
 #include "comm/strparse.h"
 #include "comm/sock.h"
-#include "comm/lock.h"
 #include "cloud/const.h"
 #include "cloud/switchhand.h"
 #include <sys/epoll.h>
@@ -102,7 +101,7 @@ void TcpAioInvoker::clearReqQueue( void )
 {
 	if (!m_reqQueue.empty())
 	{
-		RWLOCK_WRITE(m_qLock);
+		std::unique_lock lock(m_qLock);
 		for (auto it = m_reqQueue.begin(); m_reqQueue.end() != it; ++it)
 		{
 			it->second->append(""); // to unblock wait
@@ -442,7 +441,7 @@ int TcpAioInvoker::cmdProcess( IOBuffItem*& iBufItem )
 		ERRLOG_IF1BRK(cmdid <= CMDID_MID, -72, 
 			"INVOKERPROCESS| msg=recv req cmdid| cmdid=0x%x| mi=%s", cmdid, m_cliName.c_str());
 		{
-			RWLOCK_READ(m_qLock);
+			std::shared_lock lock(m_qLock);
 			auto itr = m_reqQueue.find(seqid);
 			if (m_reqQueue.end() == itr)
 			{
@@ -484,7 +483,7 @@ int TcpAioInvoker::request( string& resp, int cmdid, const string& reqmsg )
 	int seqid = ++m_seqid;
 	shared_ptr< Queue<string, false> > shareQueue = make_shared< Queue<string, false> >();
 	{
-		RWLOCK_WRITE(m_qLock);
+		std::unique_lock lock(m_qLock);
 		m_reqQueue[seqid] = shareQueue;
 	}
 
@@ -502,7 +501,7 @@ int TcpAioInvoker::request( string& resp, int cmdid, const string& reqmsg )
 	while(0);
 	
 	{
-		RWLOCK_WRITE(m_qLock);
+		std::unique_lock lock(m_qLock);
 		m_reqQueue.erase(seqid);
 	}
 
@@ -513,7 +512,7 @@ int TcpAioInvoker::request( InvkCBFunc cb_func, int cmdid, const string& reqmsg 
 {
 	int seqid = ++m_seqid;
 	{
-		RWLOCK_WRITE(m_qLock);
+		std::unique_lock lock(m_qLock);
 		m_reqCBQueue[seqid] = std::make_tuple(time(NULL)+m_timeout_interval_sec, cb_func);
 	}
 
@@ -529,7 +528,7 @@ int TcpAioInvoker::request( InvkCBFunc cb_func, int cmdid, const string& reqmsg 
 	
 	if (ret < 0)
 	{
-		RWLOCK_WRITE(m_qLock);
+		std::unique_lock lock(m_qLock);
 		m_reqCBQueue.erase(seqid);
 		return ret;
 	}

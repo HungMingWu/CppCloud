@@ -9,9 +9,9 @@ Modification :
 #ifndef _SVR_STAT_H_
 #define _SVR_STAT_H_
 #include <string>
+#include <shared_mutex>
 #include <map>
 #include "comm/public.h"
-#include "comm/lock.h"
 #include "comm/i_taskrun.h"
 
 
@@ -62,7 +62,7 @@ private:
     int appendTimerq( void );
 
 private:
-    RWLock m_rwLock;
+    std::shared_mutex m_rwLock;
     bool m_inqueue;
     int m_delayTimeSec;
     

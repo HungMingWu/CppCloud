@@ -11,8 +11,8 @@ Modification :
 #include <string>
 #include <map>
 #include <vector>
+#include <shared_mutex>
 #include "comm/public.h"
-#include "comm/lock.h"
 #include "comm/i_taskrun.h"
 #include "svr_item.h"
 
@@ -75,7 +75,7 @@ private:
     int m_refresh_sec;
     int m_invoker_default_tosec;
     
-    RWLock m_rwLock;
+    std::shared_mutex m_rwLock;
     bool m_inqueue;
 };
 

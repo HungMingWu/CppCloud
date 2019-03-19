@@ -2,10 +2,10 @@
 #include "tcp_invoker.h"
 #include "svrconsumer.h"
 #include "comm/strparse.h"
-#include "comm/lock.h"
 #include "cloud/msgid.h"
+#include <shared_mutex>
 
-RWLock gLocker;
+std::shared_mutex gLocker;
 
 TcpInvokerMgr::TcpInvokerMgr( void )
 {
@@ -35,7 +35,7 @@ TcpInvoker* TcpInvokerMgr::getInvoker( const string& hostport, int timeout_sec )
 {
     TcpInvoker* ivk = NULL;
     {
-        gLocker.WLock();
+        gLocker.lock();
         auto it = m_pool.find(hostport);
         if (it != m_pool.end())
         {
@@ -64,7 +64,7 @@ void TcpInvokerMgr::relInvoker( TcpInvoker* ivk )
     if (ivk && ivk->check(0))
     {
         string key = ivk->getKey();
-        gLocker.WLock();
+        gLocker.lock();
         if (m_pool[key].size() < (unsigned)m_eachLimitCount)
         {
             m_pool[key].push_back(ivk);

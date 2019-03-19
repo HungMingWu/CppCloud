@@ -72,13 +72,11 @@ IOHand* OuterServ::getNearSendServ( void )
     static const int alive_interval_sec1 = 60*5;
     static const int alive_interval_sec2 = 60*15;
     IOHand* ret = NULL;
-    map<string, RoutePath>::iterator it = m_routpath.begin();
-    map<string, RoutePath>::iterator it0;
     int now = time(NULL);
 
-    for ( ; it != m_routpath.end(); )
+    for (auto it = m_routpath.begin(); it != m_routpath.end(); )
     {
-        it0 = it++;
+        auto it0 = it++;
         RoutePath& ref = it0->second;
         CliBase* servptr = CliMgr::Instance()->getChildBySvrid(ref.next_svrid);
         if (servptr)

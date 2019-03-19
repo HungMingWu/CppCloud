@@ -96,7 +96,7 @@ int SvrConsumer::onCMD_EVNOTIFY_REQ( void* ptr )
     ERRLOG_IF1RET_N(notify!="provider_down" || 0==svrid, -113, 
         "EVNOTIFY| msg=%s", Rjson::ToString(doc).c_str());
     
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     map<string, SvrItem*>::iterator it = m_allPrvds.find(regname);
     if (it != m_allPrvds.end())
     {
@@ -230,7 +230,7 @@ int SvrConsumer::parseResponse( const void* ptr )
     {
         if (prvds)
         {
-            RWLOCK_WRITE(m_rwLock);
+            std::unique_lock lock(m_rwLock);
             SvrItem* oldi = m_allPrvds[regname];
             if (oldi)
             {
@@ -250,7 +250,7 @@ int SvrConsumer::parseResponse( const void* ptr )
 
 void SvrConsumer::uninit( void )
 {
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     map<string, SvrItem*>::iterator it = m_allPrvds.begin();
     for (; it != m_allPrvds.end(); ++it)
     {
@@ -267,7 +267,7 @@ void SvrConsumer::setRefreshTO( int sec )
 
 void SvrConsumer::setInvokeTimeoutSec( int sec, const string& regname )
 {
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     if (regname.empty() || "all" == regname)
     {
         for (auto it = m_allPrvds.begin(); m_allPrvds.end() != it; ++it)
@@ -290,7 +290,7 @@ void SvrConsumer::setInvokeTimeoutSec( int sec, const string& regname )
 
 int SvrConsumer::getInvokeTimeoutSec( const string& regname )
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     auto it = m_allPrvds.find(regname);
     if ( m_allPrvds.end() != it )
     {
@@ -301,7 +301,7 @@ int SvrConsumer::getInvokeTimeoutSec( const string& regname )
 
 int SvrConsumer::getSvrPrvd( svr_item_t& pvd, const string& svrname )
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     map<string, SvrItem*>::iterator it = m_allPrvds.find(svrname);
     IFRETURN_N(it == m_allPrvds.end(), -1);
     svr_item_t* itm = it->second->randItem();
@@ -361,7 +361,7 @@ int SvrConsumer::qrun( int flag, long p2 )
 	if (0 == flag)
 	{
         time_t now = time(NULL);
-        RWLOCK_READ(m_rwLock);
+        std::shared_lock lock(m_rwLock);
 		auto itr = m_allPrvds.begin();
         string desc;
         for (; itr != m_allPrvds.end(); ++itr)

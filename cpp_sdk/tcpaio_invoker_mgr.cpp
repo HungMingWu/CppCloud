@@ -2,11 +2,11 @@
 #include "tcpaio_invoker.h"
 #include "svrconsumer.h"
 #include "comm/strparse.h"
-#include "comm/lock.h"
 #include "cloud/msgid.h"
 #include "comm/hepoll.h"
+#include <shared_mutex>
 
-static RWLock gLocker;
+static std::shared_mutex gLocker;
 //static HEpoll gHepo;
 
 TcpAioInvokerMgr::TcpAioInvokerMgr( void )
@@ -42,7 +42,7 @@ TcpAioInvoker* TcpAioInvokerMgr::getInvoker( const string& hostport, int timeout
 {
     TcpAioInvoker* ivk = NULL;
     {
-        RWLOCK_READ(gLocker);
+        std::shared_lock lock(gLocker);
         auto it = m_pool.find(hostport);
         if (it != m_pool.end())
         {
@@ -56,7 +56,7 @@ TcpAioInvoker* TcpAioInvokerMgr::getInvoker( const string& hostport, int timeout
         int ret = ivk->init(m_epfd, timeout_sec);
         if (0 == ret)
         {
-            RWLOCK_WRITE(gLocker);
+            std::unique_lock lock(gLocker);
             auto it = m_pool.find(hostport);
             if (it == m_pool.end())
             {

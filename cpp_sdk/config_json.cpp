@@ -18,7 +18,7 @@ int ConfJson::update( const Value* data )
             "CONFUPDATE| msg=data invalid| data=%s", Rjson::ToString(data).c_str());
     
     m_mtime = mtime;
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     //m_doc.SetObject();
     //m_doc.CopyFrom(*contents, m_doc.GetAllocator()); // 有个问题不用这样用
     m_doc.Parse(Rjson::ToString(contents).c_str());
@@ -83,39 +83,39 @@ const Value* ConfJson::_findNode( const string& qkey ) const
 
 int ConfJson::query(int& oval, const string& qkey, bool wideVal) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     const Value* node = _findNode(qkey);
     return _parseVal(oval, node, wideVal);
 }
 
 int ConfJson::query( string& oval, const string& qkey, bool wideVal ) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     const Value* node = _findNode(qkey);
     return _parseVal(oval, node, wideVal);
 }
 
 int ConfJson::query( map<string, string>& oval, const string& qkey, bool wideVal ) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     return queryMAP(oval, qkey, wideVal);
 }
 
 int ConfJson::query( map<string, int>& oval, const string& qkey, bool wideVal ) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     return queryMAP(oval, qkey, wideVal);
 }
 
 int ConfJson::query( vector<string>& oval, const string& qkey, bool wideVal ) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     return queryVector(oval, qkey, wideVal);
 }
 
 int ConfJson::query( vector<int>& oval, const string& qkey, bool wideVal ) const
 {
-    RWLOCK_READ(m_rwLock);
+    std::shared_lock lock(m_rwLock);
     return queryVector(oval, qkey, wideVal);
 }
 

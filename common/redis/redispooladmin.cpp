@@ -116,7 +116,7 @@ int RedisConnPoolAdmin::LoadPoolFromRun( const redis_pool_conf_t* conf )
     // make sure poolname not confict
     BREAKNIF1(NULL == conf || NULL == conf->redisname, ERR_RDS_PARAM_INPUT);
     
-    LockGuard lk(m_lock); // 构造加锁,析构解锁
+    std::lock_guard lk(m_lock); // 构造加锁,析构解锁
     BREAKNIF1(m_conn_pools.find(conf->redisname) != m_conn_pools.end(), ERR_RDS_DUP_INIT);
     redis_pool_conf_t* inconf = (redis_pool_conf_t*)malloc(sizeof(redis_pool_conf_t));
     inconf->port = conf->port;
@@ -189,7 +189,7 @@ int RedisConnPoolAdmin::RegisterPool(redis_pool_conf_t* conf)
 	BREAK_CTRL_BEGIN
 	BREAKNIF1(NULL == conf, ERR_RDS_PARAM_INPUT);
 	BREAKNIF1(NULL == conf->redisname, ERR_RDS_PARAM_INPUT);
-    LockGuard lk(m_lock); // 构造加锁,析构解锁
+        std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 	BREAKNIF1(m_conn_pools.find(conf->redisname) != m_conn_pools.end(), ERR_RDS_DUP_INIT);
 
 	
@@ -218,7 +218,7 @@ int RedisConnPoolAdmin::RegisterPool(redis_pool_conf_t* conf)
 
 int RedisConnPoolAdmin::DestroyPool(const char* redisname)
 {
-    LockGuard lk(m_lock); // 构造加锁,析构解锁
+        std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 
 	if (redisname)
 	{
@@ -274,7 +274,7 @@ int RedisConnPoolAdmin::GetConnect(Redis*& predis, const char* redisname)
     map<string, RedisConnPool*>::iterator it;
 
     {
-        LockGuard lk(m_lock); // 构造加锁,析构解锁
+        std::lock_guard lk(m_lock); // 构造加锁,析构解锁
         it = m_conn_pools.find(redisname);
         if (m_conn_pools.end() != it)
         {
@@ -340,7 +340,7 @@ void RedisConnPoolAdmin::showPoolStatus( string& strbak, const char* redisname )
     RedisConnPool* pool = NULL;
     string keyname;
     map<string, RedisConnPool*>::iterator it;
-    LockGuard lk(m_lock); // 构造加锁,析构解锁
+    std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 
     if (redisname)
     {

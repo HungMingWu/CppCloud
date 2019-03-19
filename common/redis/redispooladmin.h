@@ -8,6 +8,7 @@
 #ifndef _REDISPOOLADMIN_H_
 #define _REDISPOOLADMIN_H_
 #include <map>
+#include <mutex>
 #include "comm/lock.h"
 #include "redis.h"
 
@@ -108,7 +109,7 @@ protected: // 单实例对象
 	~RedisConnPoolAdmin(void);
 
 private:
-    ThreadLock m_lock;
+    std::mutex m_lock;
 	map<string, RedisConnPool*> m_conn_pools;
     map<string, redis_pool_conf_t*> m_all_conf; // 非启动时初始化的池
 	

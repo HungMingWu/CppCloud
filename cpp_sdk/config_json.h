@@ -9,7 +9,7 @@ Modification :
 #ifndef _CONFIG_JSON_H_
 #define _CONFIG_JSON_H_
 #include "comm/public.h"
-#include "comm/lock.h"
+#include <shared_mutex>
 #include <string>
 #include <vector>
 #include <map>
@@ -47,7 +47,7 @@ private:
     time_t m_mtime;
     Document m_doc;
     string m_fname;
-    mutable RWLock m_rwLock;
+    mutable std::shared_mutex m_rwLock;
 };
 
 #endif

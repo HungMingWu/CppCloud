@@ -11,7 +11,7 @@ Modification :
 #include <arpa/inet.h>
 #include <memory>
 #include <tuple>
-#include "comm/lock.h"
+#include <shared_mutex>
 #include "comm/hep_base.h"
 #include "comm/queue.h"
 #include "cloud/iobuff.h"
@@ -97,7 +97,7 @@ protected:
 	map< int, shared_ptr< Queue<string, false> > > m_reqQueue;
 	map< int, tuple<time_t, InvkCBFunc> > m_reqCBQueue;
 	bool m_inTimerq;
-	RWLock m_qLock;
+	std::shared_mutex m_qLock;
 };
 
 #endif

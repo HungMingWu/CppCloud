@@ -1,14 +1,14 @@
 #include "config_mgr.h"
 #include "config_json.h"
 #include "cloudapp.h"
-#include "comm/lock.h"
 #include "cloud/exception.h"
 #include "cloud/homacro.h"
 #include "comm/strparse.h"
 #include "cloud/const.h"
 #include <vector>
+#include <shared_mutex>
 
-static RWLock g_rwLock0;
+static std::shared_mutex g_rwLock0;
 
 ConfigMgr::ConfigMgr( void )
 {
@@ -21,7 +21,7 @@ ConfigMgr::~ConfigMgr( void )
 
 void ConfigMgr::uninit( void )
 {
-    RWLOCK_WRITE(g_rwLock0);
+    std::unique_lock lock(g_rwLock0);
     map<string, ConfJson*>::iterator it = m_jcfgs.begin();
     for (; m_jcfgs.end() != it; ++it)
     {
@@ -49,7 +49,7 @@ int ConfigMgr::initLoad( const string& confName )
 
     m_mainConfName = CloudApp::Instance()->getMConf();
     vector<string>::const_iterator cit = vFname.begin();
-    RWLOCK_WRITE(g_rwLock0);
+    std::unique_lock lock(g_rwLock0);
     static bool cbOk = false;
     for (; cit != vFname.end(); ++cit)
     {
@@ -116,7 +116,7 @@ int ConfigMgr::onCMD_EVNOTIFY_REQ( void* ptr )
 
     // 全部配置reload
     {
-        RWLOCK_READ(g_rwLock0);
+        std::shared_lock lock(g_rwLock0);
         map<string, ConfJson*>::iterator it = m_jcfgs.begin();
         for (; m_jcfgs.end() != it; ++it)
         {
@@ -153,7 +153,7 @@ int ConfigMgr::onCMD_GETCONFIG_RSP( void* ptr, unsigned cmdid, void* param )
         ERRLOG_IF1BRK(code || !doc.HasMember("contents"), -52, 
             "CONFCHANGE| msg=maybe no file exist| name=%s| resp=%s", fname.c_str(), Rjson::ToString(&doc).c_str());
         
-        RWLOCK_WRITE(g_rwLock0);
+        std::unique_lock lock(g_rwLock0);
         ConfJson* cjn = m_jcfgs[fname];
         if (NULL == cjn)
         {
@@ -191,7 +191,7 @@ int ConfigMgr::OnReconnectNotifyCB( void* param )
 
 int ConfigMgr::onReconnectNotifyCB( void* param )
 {
-    RWLOCK_READ(g_rwLock0);
+    std::shared_lock lock(g_rwLock0);
     map<string, ConfJson*>::iterator it = m_jcfgs.begin();
     for (; m_jcfgs.end() != it; ++it)
     {
@@ -219,7 +219,7 @@ int ConfigMgr::_query( ValT& oval, const string& fullqkey, map<string, ValT >& c
 {
     static const char seperator_ch = '/';
     {
-        RWLOCK_READ(g_rwLock0);
+        std::shared_lock lock(g_rwLock0);
         IFRETURN_N(0 == _tryGetFromCache(oval, fullqkey, cacheMap), 0);
     }
     
@@ -246,7 +246,7 @@ int ConfigMgr::_query( ValT& oval, const string& fullqkey, map<string, ValT >& c
     ERRLOG_IF1RET_N(fname.empty() || qkey.empty(), -54, "CONFQUERY| msg=invalid param| fullqkey=%s", fullqkey.c_str());
     int ret = 0;
     {
-        RWLOCK_WRITE(g_rwLock0);
+        std::unique_lock lock(g_rwLock0);
         map<string,ConfJson*>::const_iterator it = m_jcfgs.find(fname);
         ERRLOG_IF1RET_N(m_jcfgs.end() == it, -55, "CONFQUERY| msg=invalid filename| fullqkey=%s", fullqkey.c_str());
         ret = it->second->query(oval, qkey, wideVal);

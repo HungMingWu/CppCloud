@@ -1,6 +1,7 @@
 #ifndef _REDISPOOL_H_
 #define _REDISPOOL_H_
 #include <list>
+#include <mutex>
 #include "redis.h"
 #include "comm/lock.h"
 
@@ -57,7 +58,7 @@ private:
     static const int DEFAULT_TIMEOUT = 600;
 
 	bool m_inited;               // 是否已初始化
-	ThreadLock m_lock;           //线程锁
+	std::mutex m_lock;           //线程锁
 	list<Redis*> m_freeconn_list; //空闲连接
 };
 

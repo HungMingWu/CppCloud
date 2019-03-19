@@ -13,7 +13,7 @@ int ASyncPrvdMsg::pushMessage( const msg_prop_t* mp, const string& msg )
     msgitm.msg = msg;
 
     {
-        LockGuard lk(m_lock);
+        std::lock_guard lk(m_lock);
         m_msgQueue.push_back(msgitm);
     }
 
@@ -32,12 +32,12 @@ int ASyncPrvdMsg::run(int p1, long p2)
 int ASyncPrvdMsg::qrun( int flag, long p2 )
 {
     int ret = 0;
-    m_lock.Lock();
+    m_lock.lock();
     if (!m_msgQueue.empty())
     {
         AMsgItem msgitm = m_msgQueue.front();
         m_msgQueue.pop_front();
-        m_lock.Unlock();
+        m_lock.unlock();
 
         IOHand* iohand = (IOHand*)msgitm.msgprop.iohand;
         if (CliMgr::Instance()->getCliInfo(iohand))
@@ -54,7 +54,7 @@ int ASyncPrvdMsg::qrun( int flag, long p2 )
     }
     else
     {
-        m_lock.Unlock();
+        m_lock.unlock();
     }
 
     return ret;

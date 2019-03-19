@@ -58,7 +58,7 @@ SvrStat::CountEntry* SvrStat::_getEntry( const string& regname, int svrid, int p
 
 void SvrStat::addPrvdCount( const string& regname, bool isOk, int prvdid, int svrid, int dcount )
 {
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     CountEntry* stat = _getEntry(regname, svrid, prvdid);
     if (isOk)
     {
@@ -77,7 +77,7 @@ void SvrStat::addInvkCount( const string& regname, bool isOk, int prvdid, int sv
 {
     IFRETURN(m_delayTimeSec <= 0);
     
-    RWLOCK_WRITE(m_rwLock);
+    std::unique_lock lock(m_rwLock);
     CountEntry* stat = _getEntry(regname, svrid, prvdid);
     
     if (isOk)
@@ -109,7 +109,7 @@ int SvrStat::qrun( int flag, long p2 )
 
         int cnt = 0;
         {
-            RWLOCK_READ(m_rwLock);
+            std::shared_lock lock(m_rwLock);
             for (auto it : m_stat)
             {
                 string entryJson = it.second.jsonStr();

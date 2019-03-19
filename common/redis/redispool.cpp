@@ -50,7 +50,7 @@ void RedisConnPool::uninit(void)
 	{
 		m_conf = NULL;
 
-        LockGuard lk(m_lock); // 构造加锁,析构解锁
+                std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 		list<Redis*>::iterator it = m_freeconn_list.begin();
 		while (it != m_freeconn_list.end())
 		{
@@ -120,7 +120,7 @@ int RedisConnPool::getConnect(Redis*& rds, bool only_pool)
 	UNINIT_RETURN_N(ERR_RDS_PARAM_INPUT);
 
     {
-        LockGuard lk(m_lock); // 构造加锁,析构解锁
+        std::lock_guard lk(m_lock); // 构造加锁,析构解锁
         if (!m_freeconn_list.empty())
         {
             p = m_freeconn_list.front();
@@ -146,7 +146,7 @@ int RedisConnPool::getConnect(Redis*& rds, bool only_pool)
 			{
 				newrds->inpool = can_create;
 				
-				LockGuard lk(m_lock); // 构造加锁,析构解锁
+				std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 				++m_totalconn_count;
 
 				if (can_create)
@@ -189,7 +189,7 @@ int RedisConnPool::getConnect(Redis*& rds, bool only_pool)
                 else
                 {
                     destroy_connect(p);
-                    LockGuard lk(m_lock); // 构造加锁,析构解锁
+                    std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 					--m_totalconn_count;
 					--m_conn_count_process;
 					// m_conn_count_db
@@ -216,21 +216,21 @@ void RedisConnPool::relConnect(Redis *rds, bool check_connect)  // 释放连接
         if (check_connect && 0 != rds->getstate()) //rds连接已不正常
         {
             destroy_connect(rds);
-            LockGuard lk(m_lock); // 构造加锁,析构解锁
+	    std::lock_guard lk(m_lock); // 构造加锁,析构解锁
             --m_conn_count_process;
             --m_totalconn_count;
         }
         else
         {
             rds->settime();
-            LockGuard lk(m_lock); // 构造加锁,析构解锁
+            std::lock_guard lk(m_lock); // 构造加锁,析构解锁
             m_freeconn_list.push_back(rds);
         }
 	}
 	else // 短连接
 	{
 		destroy_connect(rds);
-        LockGuard lk(m_lock); // 构造加锁,析构解锁
+		std::lock_guard lk(m_lock); // 构造加锁,析构解锁
         --m_totalconn_count;
 	}
 }

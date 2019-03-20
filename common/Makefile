@@ -1,5 +1,5 @@
 SrcCpp:=comm/strparse.cpp comm/log.cpp comm/config.cpp comm/thread.cpp
-SrcCpp+=comm/taskpool.cpp comm/file.cpp comm/sock.cpp comm/timef.cpp comm/timespand.cpp
+SrcCpp+=comm/file.cpp comm/sock.cpp comm/timef.cpp comm/timespand.cpp
 SrcCpp+=comm/base64.cpp comm/simplehttp.cpp comm/hep_base.cpp comm/hepoll.cpp
 SrcCpp+=rapidxml/bmshxml.cpp
 #SrcCpp+=redis/redis.cpp redis/redispool.cpp redis/redispooladmin.cpp

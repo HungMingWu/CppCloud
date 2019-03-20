@@ -100,10 +100,11 @@ int SvrConsumer::onCMD_EVNOTIFY_REQ( void* ptr )
     auto it = m_allPrvds.find(regname);
     if (it != m_allPrvds.end())
     {
-        it->second->rmBySvrid(svrid, prvdid);
-        if (it->second->svrItms.size() <= 0)
+        auto &[name, item] = *it;
+        item.rmBySvrid(svrid, prvdid);
+        if (item.svrItms.size() <= 0)
         {
-            m_emptyPrvds[it->first] = true;
+            m_emptyPrvds[name] = true;
             appendTimerq(true);
         }
     }
@@ -186,15 +187,15 @@ int SvrConsumer::parseResponse( const void* ptr )
     Value::ConstValueIterator itr = pdata->Begin();
     string regname;
     string prvdLog;
-    SvrItem* prvds = NULL;
+    std::optional<SvrItem> prvds;
 
     for (int i = 0; itr != pdata->End(); ++itr, ++i)
     {
         svr_item_t svitm;
         const Value* node = &(*itr);
-        if (NULL == prvds)
+        if (!prvds)
         {
-            prvds = new SvrItem;
+            prvds = SvrItem();
             prvds->ctime = time(NULL);
             prvds->timeout_sec = m_invoker_default_tosec;
             RJSON_GETSTR(regname, node);
@@ -224,20 +225,16 @@ int SvrConsumer::parseResponse( const void* ptr )
     LOGOPT_EI(prvdLog.empty(), "PROVDLIST| regname=%s| svitem=%s", regname.c_str(), prvdLog.c_str());
     if (ret)
     {
-        IFDELETE(prvds);
     }
     else
     {
         if (prvds)
         {
             std::unique_lock lock(m_rwLock);
-            SvrItem* oldi = m_allPrvds[regname];
-            if (oldi)
-            {
-                prvds->timeout_sec = oldi->timeout_sec;
-                IFDELETE(oldi);
-            }
-            m_allPrvds[regname] = prvds;
+            auto oldit = m_allPrvds.find(regname);
+            if (oldit != end(m_allPrvds))
+                prvds->timeout_sec = oldit->second.timeout_sec;
+            m_allPrvds[regname] = prvds.value();
             if (prvds->svrItms.size() > 0)
             {
                 m_emptyPrvds.erase(regname);
@@ -251,12 +248,6 @@ int SvrConsumer::parseResponse( const void* ptr )
 void SvrConsumer::uninit( void )
 {
     std::unique_lock lock(m_rwLock);
-    auto it = m_allPrvds.begin();
-    for (; it != m_allPrvds.end(); ++it)
-    {
-        delete it->second;
-    }
-
     m_allPrvds.clear();
 }
 
@@ -270,10 +261,8 @@ void SvrConsumer::setInvokeTimeoutSec( int sec, const string& regname )
     std::unique_lock lock(m_rwLock);
     if (regname.empty() || "all" == regname)
     {
-        for (auto it = m_allPrvds.begin(); m_allPrvds.end() != it; ++it)
-        {
-            it->second->timeout_sec = sec;
-        }
+        for (auto &[name, item] : m_allPrvds)
+            item.timeout_sec = sec;
 
         m_invoker_default_tosec = sec;
     }
@@ -282,7 +271,7 @@ void SvrConsumer::setInvokeTimeoutSec( int sec, const string& regname )
         auto it = m_allPrvds.find(regname);
         if ( m_allPrvds.end() != it )
         {
-            it->second->timeout_sec = sec;
+            it->second.timeout_sec = sec;
         }
     }
 }
@@ -294,7 +283,7 @@ int SvrConsumer::getInvokeTimeoutSec( const string& regname )
     auto it = m_allPrvds.find(regname);
     if ( m_allPrvds.end() != it )
     {
-        return it->second->timeout_sec;
+        return it->second.timeout_sec;
     }
     return m_invoker_default_tosec;
 }
@@ -304,7 +293,7 @@ int SvrConsumer::getSvrPrvd( svr_item_t& pvd, const string& svrname )
     std::shared_lock lock(m_rwLock);
     auto it = m_allPrvds.find(svrname);
     IFRETURN_N(it == m_allPrvds.end(), -1);
-    svr_item_t* itm = it->second->randItem();
+    svr_item_t* itm = it->second.randItem();
     int ret = -114;
     if (itm)
     {
@@ -362,17 +351,13 @@ int SvrConsumer::qrun( int flag, long p2 )
 	{
         time_t now = time(NULL);
         std::shared_lock lock(m_rwLock);
-		auto itr = m_allPrvds.begin();
         string desc;
-        for (; itr != m_allPrvds.end(); ++itr)
-        {
-            SvrItem* svitm = itr->second;
-            if (svitm->svrItms.empty() || svitm->ctime < now - m_refresh_sec)
+        for (auto &[name, svitm] : m_allPrvds)
+            if (svitm.svrItms.empty() || svitm.ctime < now - m_refresh_sec)
             {
-                ret = _postSvrSearch(itr->first);
-                desc += itr->first + " ";
+                ret = _postSvrSearch(name);
+                desc += name + " ";
             }
-        }
 
         LOGDEBUG("SVRCONSUMER| msg=post out checking svr req| svrlist=%s", desc.c_str());
         appendTimerq(false);

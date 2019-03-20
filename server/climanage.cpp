@@ -27,16 +27,8 @@ bool CliMgr::AliasCursor::empty(void)
 	return iter_range.empty();
 }
 
-
-CliMgr::CliMgr(void)
-{
-	m_waitRmPtr = NULL;
-	m_localEra = 0;
-}
-
 CliMgr::~CliMgr(void)
 {
-	IFDELETE(m_waitRmPtr);
  	map<CliBase*, CliInfo>::iterator it = m_children.begin();
 	for (; it != m_children.end(); ++it)
 	{
@@ -136,15 +128,15 @@ void CliMgr::removeAliasChild( CliBase* ptr, bool rmAll )
 			}
 
 			m_children.erase(it);
-			if (ptr != (CliBase*)m_waitRmPtr)
+			if (ptr != (CliBase*)m_waitRmPtr.get())
 			{
-				IFDELETE(m_waitRmPtr); // 清理前一待删对象(为避免同步递归调用)
+				m_waitRmPtr.reset(); // 清理前一待删对象(为避免同步递归调用)
 			}
 
 			LOGINFO("CliMgr_CHILDRM| msg=a iohand close| life=%ds| asname=%s", int(time(NULL)-cliinfo.t0), asnamestr.c_str());
 			if (it->second.inControl)
 			{
-				m_waitRmPtr = static_cast<IOHand*>(ptr);
+				m_waitRmPtr.reset(static_cast<IOHand*>(ptr));
 			}
 		}
 	}
@@ -381,5 +373,5 @@ string CliMgr::selfStat( bool incAliasDetail )
 	}
 
 	return StrParse::Format("child_num=%zu| era=%d| wptr=%p| alias_num=%zu(%s)", 
-		m_children.size(), m_localEra, m_waitRmPtr, m_aliName2Child.size(), adetail.c_str());
+		m_children.size(), m_localEra, m_waitRmPtr.get(), m_aliName2Child.size(), adetail.c_str());
 }	

@@ -21,12 +21,11 @@ class SvrConsumer : public ITaskRun2
     struct SvrItem
     {
         std::vector<svr_item_t> svrItms;
-        int weightSum;
-        int callcount;
-        int timeout_sec; // 调用时的超时时间，由调用方指定
+        int weightSum = 0;
+        int callcount = 0;
+        int timeout_sec = 3; // 调用时的超时时间，由调用方指定
         time_t ctime;
 
-        SvrItem(): weightSum(0), callcount(0), timeout_sec(3) {}
         void rmBySvrid( int svrid, int prvdid );
         svr_item_t* randItem( void );
     };
@@ -66,8 +65,8 @@ private:
     int _postSvrSearch( const string& regname ) const;
 
 private:
-    std::map<string, SvrItem*> m_allPrvds;
-    std::map<string, bool> m_emptyPrvds; // 存放失去全部连接的提供者名
+    std::map<std::string, SvrItem> m_allPrvds;
+    std::map<std::string, bool> m_emptyPrvds; // 存放失去全部连接的提供者名
 
     int m_refresh_sec;
     int m_invoker_default_tosec;

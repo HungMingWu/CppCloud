@@ -26,7 +26,7 @@ struct SdkMember
     HEpoll hepo;
     Listen listen;
     string mainconf;
-    std::thread* pthread;
+    std::unique_ptr<std::thread> pthread;
 
     bool bCloudApp;
     bool bProvider;
@@ -34,7 +34,7 @@ struct SdkMember
 
     bool bExit;
 
-    SdkMember(): pthread(NULL), bCloudApp(false), bProvider(false), 
+    SdkMember(): bCloudApp(false), bProvider(false),
         bInvoker(false), bExit(false) {}
 } gsdk;
 
@@ -303,7 +303,7 @@ int Run( bool runBackgroud )
     SwitchHand::Instance()->init(gsdk.hepo.getEPfd());
     if (runBackgroud)
     {
-        gsdk.pthread = new std::thread(_Run);
+        gsdk.pthread.reset(new std::thread(_Run));
         ret = 0;
     }
     else
@@ -321,7 +321,7 @@ void Destroy( void )
     if (gsdk.pthread)
     {
         gsdk.pthread->join();
-        IFDELETE(gsdk.pthread);
+        gsdk.pthread.reset();
     }
 
     if (gsdk.bInvoker)

@@ -13,6 +13,7 @@ Modification :
 #include "iohand.h"
 #include <cstdarg>
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
 
@@ -88,7 +89,7 @@ public:
     int onChildEvent( int evtype, va_list ap );
 
 private:
-    CliMgr(void);
+    CliMgr() = default;
     ~CliMgr(void);
 
 protected:
@@ -96,8 +97,8 @@ protected:
     map<string, CliBase*> m_aliName2Child;
     vector<CliPreCloseNotifyFunc> m_cliCloseConsumer; // 客户关闭事件消费者
 
-    IOHand* m_waitRmPtr;
-    int m_localEra;
+    std::unique_ptr<IOHand> m_waitRmPtr;
+    int m_localEra = 0;
 };
 
 #endif

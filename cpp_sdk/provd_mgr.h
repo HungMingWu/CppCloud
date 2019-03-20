@@ -13,8 +13,6 @@ Modification :
 #include <string>
 #include <map>
 
-using namespace std;
-
 struct ProviderItem : public SvrProp
 {
 
@@ -57,7 +55,7 @@ private:
     int m_timeout_sec;
 
     // 服务提供者
-    map<string, ProviderItem*> m_provider_apps;
+    std::map<string, ProviderItem*> m_provider_apps;
 };
 
 #endif

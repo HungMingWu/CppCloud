@@ -16,7 +16,6 @@ Modification :
 #include "comm/queue.h"
 #include "cloud/iobuff.h"
 
-using namespace std;
 typedef long long datasize_t;
 typedef void (*InvkCBFunc)( int result, int seqid, const char* msg );
 
@@ -94,8 +93,8 @@ protected:
 	IOBuffItem* m_iBufItem;
 	IOBuffItem* m_oBufItem;
 	Queue<IOBuffItem*, true> m_oBuffq;
-	map< int, shared_ptr< Queue<string, false> > > m_reqQueue;
-	map< int, tuple<time_t, InvkCBFunc> > m_reqCBQueue;
+	std::map< int, std::shared_ptr< Queue<string, false> > > m_reqQueue;
+	std::map< int, std::tuple<time_t, InvkCBFunc> > m_reqCBQueue;
 	bool m_inTimerq;
 	std::shared_mutex m_qLock;
 };

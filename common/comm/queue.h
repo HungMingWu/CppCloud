@@ -20,7 +20,6 @@ Modification Log:
 #include <sys/time.h>
 #include <unistd.h>
 
-using namespace std; 
 #define USE_QUEUE_CPP // 如果想单独使用此文件,脱离queue.cpp,则注释此行
 
 template<bool isPtr=false>
@@ -39,11 +38,11 @@ static bool operator<(struct timeval l, struct timeval r)
 }
 #endif
 
-template< typename T, bool isPtr=false, typename storage=deque<T> >
+template< typename T, bool isPtr=false, typename storage=std::deque<T> >
 class Queue
 {
     //struct timeval m_basetime; // 毫秒计时起点
-    map< struct timeval, deque<T> > m_dely_task;
+    std::map< struct timeval, std::deque<T> > m_dely_task;
     struct timeval m_near_time;
 
 public:

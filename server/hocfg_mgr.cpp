@@ -37,7 +37,7 @@ HocfgMgr::~HocfgMgr( void )
     uninit();
 }
 
-int HocfgMgr::init( const string& conf_root )
+int HocfgMgr::init( const std::string& conf_root )
 {
     ERRLOG_IF1RET_N(!File::Isdir(conf_root.c_str()), -40, "CONFIGINIT| msg=path invalid| conf_root=%s", conf_root.c_str());
     m_cfgpath = conf_root;
@@ -47,7 +47,7 @@ int HocfgMgr::init( const string& conf_root )
 
 void HocfgMgr::uninit( void )
 {
-    map<string, AppConfig*>::iterator itr = m_Allconfig.begin();
+    auto itr = m_Allconfig.begin();
     for (; itr != m_Allconfig.end(); ++itr)
     {
         IFDELETE(itr->second);
@@ -55,7 +55,7 @@ void HocfgMgr::uninit( void )
     m_Allconfig.clear();
 }
 
-int HocfgMgr::loads( const string& dirpath )
+int HocfgMgr::loads( const std::string& dirpath )
 {
     int ret = 0;
     DIR *proot;
@@ -72,7 +72,7 @@ int HocfgMgr::loads( const string& dirpath )
             continue;
         }
 
-        string item = dirpath;
+        std::string item = dirpath;
         StrParse::AdjustPath(item, true, '/');
         item += pfile->d_name;
         
@@ -80,8 +80,8 @@ int HocfgMgr::loads( const string& dirpath )
         {
             if (strstr(pfile->d_name, ".json") > 0)
             {
-                stringstream ss;
-                ifstream ifs(item);
+                std::stringstream ss;
+                std::ifstream ifs(item);
                 if(ifs.bad())
                 {
                     LOGERROR("CONFIGLOADS| msg=read %s fail %s", item.c_str(), strerror(errno));
@@ -100,10 +100,10 @@ int HocfgMgr::loads( const string& dirpath )
 }
 
 // 获取父级继承关系, 多个父级以空格分隔, 继承顺序由高至低(即祖父 父 子)
-bool HocfgMgr::getBaseConfigName( string& baseCfg, const string& curCfgName ) const
+bool HocfgMgr::getBaseConfigName( std::string& baseCfg, const std::string& curCfgName ) const
 {
     int ret = -1;
-    map<string,AppConfig*>::const_iterator itr = m_Allconfig.find(HOCFG_METAFILE);
+    auto itr = m_Allconfig.find(HOCFG_METAFILE);
     if (m_Allconfig.end() != itr)
     {
         AppConfig* papp = itr->second;
@@ -114,7 +114,7 @@ bool HocfgMgr::getBaseConfigName( string& baseCfg, const string& curCfgName ) co
 }
 
 // 解析json文档进内存map
-int HocfgMgr::parseConffile( const string& filename, const string& contents, time_t mtime )
+int HocfgMgr::parseConffile( const std::string& filename, const std::string& contents, time_t mtime )
 {
     Document fdoc;
 
@@ -123,9 +123,9 @@ int HocfgMgr::parseConffile( const string& filename, const string& contents, tim
     const size_t pathlen = m_cfgpath.length();
     size_t pos1 = filename.find(m_cfgpath);
     //size_t pos2 = filename.find(".json");
-    string key = (0 == pos1 /* && pos2 > pathlen*/) ? filename.substr(pathlen /*, pos2-pathlen*/) : filename;
+    std::string key = (0 == pos1 /* && pos2 > pathlen*/) ? filename.substr(pathlen /*, pos2-pathlen*/) : filename;
     
-    map<string, AppConfig *>::iterator itr = m_Allconfig.find(key);
+    auto itr = m_Allconfig.find(key);
     if (m_Allconfig.end() == itr)
     {
         papp = new AppConfig;
@@ -174,9 +174,9 @@ int HocfgMgr::mergeJsonFile( Value* node0, const Value* node1, MemoryPoolAllocat
     return 0;
 }
 
-AppConfig* HocfgMgr::getConfigByName( const string& curCfgName ) const
+AppConfig* HocfgMgr::getConfigByName( const std::string& curCfgName ) const
 {
-    map<string, AppConfig*>::const_iterator itr = m_Allconfig.find(curCfgName);
+    auto itr = m_Allconfig.find(curCfgName);
     AppConfig* papp = (m_Allconfig.end() == itr)? NULL: itr->second;
     return papp;
 }
@@ -184,21 +184,21 @@ AppConfig* HocfgMgr::getConfigByName( const string& curCfgName ) const
 /**
  * @return: 返回文件时间截，如果是继承的(incBase=1)，则是最大文件的时间截；无文件返回0
  **/
-int HocfgMgr::getCfgMtime( const string& file_pattern, bool incBase ) const
+int HocfgMgr::getCfgMtime( const std::string& file_pattern, bool incBase ) const
 {
     int ret = 0;
-    string baseStr;
+    std::string baseStr;
  
     AppConfig *pconf = getConfigByName(file_pattern);
     IFRETURN_N(NULL == pconf, 0);
     ret = pconf->mtime;
     if (incBase && getBaseConfigName(baseStr, file_pattern))
     {
-        vector<string> vecBase;
+        std::vector<std::string> vecBase;
         int reti = StrParse::SpliteStr(vecBase, baseStr, ' ');
         ERRLOG_IF1(reti, "HOCFGQUERY| msg=invalid basestr setting| "
                         "baseStr=%s| filep=%s", baseStr.c_str(), file_pattern.c_str());
-        vector<string>::const_iterator vitr = vecBase.begin();
+        auto vitr = vecBase.begin();
         for (; vitr != vecBase.end(); ++vitr)
         {
             AppConfig *pnod1 = getConfigByName(*vitr);
@@ -214,25 +214,25 @@ int HocfgMgr::getCfgMtime( const string& file_pattern, bool incBase ) const
 
 // 分布式配置查询, file_pattern每个token以-分隔, key_pattern每个token以/分隔
 // 返回的字符串可能是 {object} [array] "string" integer null
-int HocfgMgr::query( string& result, const string& file_pattern, const string& key_pattern, bool incBase ) const
+int HocfgMgr::query( std::string& result, const std::string& file_pattern, const std::string& key_pattern, bool incBase ) const
 {
     int ret = 0;
 
     do
     {
-        string baseStr;
+        std::string baseStr;
         
         if (incBase && getBaseConfigName(baseStr, file_pattern))
         {
             Document doc;
-            vector<string> vecBase;
+            std::vector<std::string> vecBase;
             ret = StrParse::SpliteStr(vecBase, baseStr, ' ');
             ERRLOG_IF1BRK(ret, -48, "HOCFGQUERY| msg=invalid basestr setting| "
                 "baseStr=%s| filep=%s", baseStr.c_str(), file_pattern.c_str());
             
             doc.SetObject();
             vecBase.push_back(file_pattern);
-            vector<string>::const_iterator vitr = vecBase.begin();
+            auto vitr = vecBase.begin();
             for (; vitr != vecBase.end(); ++vitr)
             {
                 AppConfig* pnod1 = getConfigByName(*vitr);
@@ -274,13 +274,13 @@ int HocfgMgr::query( string& result, const string& file_pattern, const string& k
     return ret;
 }
 
-int HocfgMgr::queryByKeyPattern( string& result, const Value* jdoc, const string& file_pattern, const string& key_pattern ) const
+int HocfgMgr::queryByKeyPattern( std::string& result, const Value* jdoc, const std::string& file_pattern, const std::string& key_pattern ) const
 {
     int ret = 0;
 
     do
     {
-        vector<string> vecPattern;
+        std::vector<std::string> vecPattern;
         ret = StrParse::SpliteStr(vecPattern, key_pattern, '/');
         ERRLOG_IF1BRK(ret || vecPattern.empty(), -46, 
             "HOCFGQUERY| msg=key_pattern invalid| key=%s| filep=%s", 
@@ -288,10 +288,10 @@ int HocfgMgr::queryByKeyPattern( string& result, const Value* jdoc, const string
 
         const Value* pval = jdoc;
         const Value* ptmp = NULL;
-        vector<string>::const_iterator vitr = vecPattern.begin();
+        auto vitr = vecPattern.begin();
         for (; vitr != vecPattern.end(); ++vitr)
         {
-            const string& token = *vitr;
+            const std::string& token = *vitr;
             if (token.empty() || "/" == token || " " == token) continue;
             ret = Rjson::GetValue(&ptmp, token.c_str(), pval);
             if (ret && StrParse::IsNumberic(token)) // 尝试访问数组
@@ -333,7 +333,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
     NormalExceptionOn_IFTRUE(filename.empty(), 400, cmdid, seqid, "leak of filename param");
 
     int ret = 0;
-    string desc;
+    std::string desc;
     if (0 == mtime) mtime = time(NULL);
     
 
@@ -347,7 +347,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
     }
     else
     {
-        string fullfilename = this->m_cfgpath + filename; // 文件名要加上本地路径来存储
+        std::string fullfilename = this->m_cfgpath + filename; // 文件名要加上本地路径来存储
         ret = this->parseConffile(fullfilename, Rjson::ToString(contents), mtime);
         desc = (0==ret)? "success": "fail";
         if (0 == ret)
@@ -364,7 +364,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
     this->notifyChange(filename, mtime);
     if (CMD_SETCONFIG_REQ == cmdid)
     {
-        string resp = _F("{\"code\": %d, \"mtime\":%d, \"desc\": \"%s\"}", 
+        std::string resp = _F("{\"code\": %d, \"mtime\":%d, \"desc\": \"%s\"}",
             ret, mtime, desc.c_str());
         iohand->sendData(CMD_SETCONFIG_RSP, seqid, resp.c_str(), resp.length(), true);
 
@@ -377,7 +377,7 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
     }
     else
     {
-        string from;
+        std::string from;
         RJSON_VGETSTR(from, BROARDCAST_KEY_FROM, &doc);
         LOGINFO("HOCFGSET| msg=modify hocfg by Serv(%s) %s| filename=%s| ret=%d", 
             from.c_str(), callby.c_str(), filename.c_str(), ret);
@@ -387,14 +387,14 @@ int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
 }
 
 // 当某配置发生变化时，通知到已订阅的客户端
-void HocfgMgr::notifyChange( const string& filename, int mtime ) const
+void HocfgMgr::notifyChange( const std::string& filename, int mtime ) const
 {
-    string aliasPrefix = _F("%s_%s@", BOOK_HOCFG_ALIAS_PREFIX, filename.c_str());
+    std::string aliasPrefix = _F("%s_%s@", BOOK_HOCFG_ALIAS_PREFIX, filename.c_str());
     CliMgr::AliasCursor alcr(aliasPrefix); 
     CliBase *cli = NULL;
     vector<CliBase*> vecCli;
 
-    string msg("{");
+    std::string msg("{");
     StrParse::PutOneJson(msg, "notify", "cfg_change", true);
     StrParse::PutOneJson(msg, "filename", filename, true);
     StrParse::PutOneJson(msg, "mtime", mtime, false);
@@ -423,17 +423,17 @@ int HocfgMgr::OnGetAllCfgName( void* ptr, unsigned cmdid, void* param )
     IOBuffItem* iBufItem = (IOBuffItem*)param; 
     unsigned seqid = iBufItem->head()->seqid;
     
-    string resp = this->getAllCfgNameJson();
+    std::string resp = this->getAllCfgNameJson();
     iohand->sendData(CMD_GETCFGNAME_RSP, seqid, resp.c_str(), resp.length(), true);
     return 0;
 }
 
 // param: 0仅返回删除的; 1仅返回存在的; 2全返回(default)
-string HocfgMgr::getAllCfgNameJson( int filter_flag /*=2*/ ) const
+std::string HocfgMgr::getAllCfgNameJson( int filter_flag /*=2*/ ) const
 {
-    string jresult("{");
+    std::string jresult("{");
 
-    map<string, AppConfig*>::const_iterator itr = m_Allconfig.begin();
+    auto itr = m_Allconfig.begin();
     for (int i=0; itr != m_Allconfig.end(); ++itr)
     {
         AppConfig* pcfg = itr->second;
@@ -451,21 +451,21 @@ string HocfgMgr::getAllCfgNameJson( int filter_flag /*=2*/ ) const
     return jresult;
 }
 
-void HocfgMgr::remove( const string& cfgname, time_t mtime )
+void HocfgMgr::remove( const std::string& cfgname, time_t mtime )
 {
-    map<string,AppConfig*>::iterator it = m_Allconfig.find(cfgname);
+    auto it = m_Allconfig.find(cfgname);
     if (it != m_Allconfig.end())
     {
         if (0 == mtime)
         {
             IFDELETE(it->second);
             m_Allconfig.erase(it);
-            string local_file = m_cfgpath + cfgname;
+            std::string local_file = m_cfgpath + cfgname;
             unlink(local_file.c_str());
         }
         else if (mtime >= it->second->mtime) // web上请求删除时,不移除内存,只作unlink,因为如删内存了,同步多机有问题
         {
-            string local_file = m_cfgpath + cfgname;
+            std::string local_file = m_cfgpath + cfgname;
             unlink(local_file.c_str());
             it->second->mtime = mtime;
             it->second->isDel = true;
@@ -474,7 +474,7 @@ void HocfgMgr::remove( const string& cfgname, time_t mtime )
     }
 }
 
-int HocfgMgr::save2File( const string& filename, const Value* doc ) const
+int HocfgMgr::save2File( const std::string& filename, const Value* doc ) const
 {
     FILE* fp = NULL;
     char buf[64];
@@ -496,7 +496,7 @@ int HocfgMgr::compareServHoCfg( int fromSvrid, const Value* jdoc )
     ERRLOG_IF1RET_N(!jdoc->IsObject(), -50, "HOCFGCMP| msg=cfgera isnot jobject| ");
 
     int ret = 0;
-    string reqmsg("{\"data\":[");
+    std::string reqmsg("{\"data\":[");
     int count = 0;
     Value::ConstMemberIterator itr = jdoc->MemberBegin();
     for (; itr != jdoc->MemberEnd(); ++itr)
@@ -519,7 +519,7 @@ int HocfgMgr::compareServHoCfg( int fromSvrid, const Value* jdoc )
             else
             {
                 if (count > 0) reqmsg += ",";
-                reqmsg += string("\"") + key + "\"";
+                reqmsg += std::string("\"") + key + "\"";
                 ++count;
             }
         }
@@ -542,21 +542,21 @@ int HocfgMgr::OnCMD_HOCFGNEW_REQ( void* ptr, unsigned cmdid, void* param )
 
     int size = arrdoc->Size();
     int okcount = 0;
-    string fs;
+    std::string fs;
     for (int i=0; i < size; ++i)
     {
-        string fname;
+        std::string fname;
         if (0 == Rjson::GetStr(fname, i, arrdoc))
         {
             AppConfig* pcfg = this->getConfigByName(fname);
             if (NULL == pcfg) continue;
 
             // 响应对应于 HocfgMgr::OnSetConfigHandle 消费
-            string msgrsp("{");
+            std::string msgrsp("{");
             StrParse::PutOneJson(msgrsp, "callby", "cfg_newer", true);
             StrParse::PutOneJson(msgrsp, "filename", fname, true);
             StrParse::PutOneJson(msgrsp, "mtime", pcfg->mtime, true);
-            msgrsp += string("\"contents\":") + Rjson::ToString(&pcfg->doc);
+            msgrsp += std::string("\"contents\":") + Rjson::ToString(&pcfg->doc);
             msgrsp += "}";
 
             fs += fname + " ";
@@ -581,27 +581,27 @@ int HocfgMgr::OnCMD_BOOKCFGCHANGE_REQ( void* ptr, unsigned cmdid, void* param )
     RJSON_VGETSTR_D(file_pattern, HOCFG_FILENAME_KEY, &doc);
 
     NormalExceptionOn_IFTRUE(file_pattern.empty()||NULL==this->getConfigByName(file_pattern),
-            420, CMD_BOOKCFGCHANGE_RSP, seqid, string("no file=" + file_pattern));
+            420, CMD_BOOKCFGCHANGE_RSP, seqid, std::string("no file=" + file_pattern));
         
-    string baseStr;
+    std::string baseStr;
     int ret = 0;
-    vector<string> vecBase;
+    std::vector<std::string> vecBase;
 
     if (1 == incbase && this->getBaseConfigName(baseStr, file_pattern))
     {
         ret = StrParse::SpliteStr(vecBase, baseStr, ' ');
     }
     
-    string linkFiles;
+    std::string linkFiles;
     vecBase.push_back(file_pattern);
-    vector<string>::const_iterator vitr = vecBase.begin();
+    auto vitr = vecBase.begin();
     for (; vitr != vecBase.end(); ++vitr)
     {
-        const string& vitem = *vitr;
-        static const string filename_special_char("/-._"); // 文件名可以包含的特殊字符
+        const std::string& vitem = *vitr;
+        static const std::string filename_special_char("/-._"); // 文件名可以包含的特殊字符
         if (StrParse::IsCharacter(vitem, filename_special_char, true))
         {
-            string aliasName = _F("%s_%s@%s", BOOK_HOCFG_ALIAS_PREFIX, 
+            std::string aliasName = _F("%s_%s@%s", BOOK_HOCFG_ALIAS_PREFIX,
                 vitem.c_str(), iohand->getProperty(CONNTERID_KEY).c_str());
             ret = CliMgr::Instance()->addAlias2Child(aliasName, iohand);
             ERRLOG_IF1(ret, "HOCFGBOOK| msg=add alias fail| aliasName=%s| iohand=%p", aliasName.c_str(), iohand);
@@ -612,7 +612,7 @@ int HocfgMgr::OnCMD_BOOKCFGCHANGE_REQ( void* ptr, unsigned cmdid, void* param )
         }
     }
 
-    string resp = 0 == ret? _F("{\"code\": 0, \"desc\": \"monitor %s success\"}", linkFiles.c_str()) :
+    std::string resp = 0 == ret? _F("{\"code\": 0, \"desc\": \"monitor %s success\"}", linkFiles.c_str()) :
         _F("{\"code\": 400, \"desc\": \"fail %d\"", ret);
     iohand->sendData(CMD_BOOKCFGCHANGE_RSP, seqid, resp.c_str(), resp.length(), true);
     return ret;
@@ -644,7 +644,7 @@ int HocfgMgr::setupPropByServConfig( IOHand* iohand ) const
 {
     int ret = 0;
 
-    map<string,AppConfig*>::const_iterator itr = m_Allconfig.find(HOCFG_METAFILE);
+    auto itr = m_Allconfig.find(HOCFG_METAFILE);
     IFRETURN_N(m_Allconfig.end() == itr, 0);
     const Value* customnode = NULL;
     Rjson::GetObject(&customnode, HOCFG_META_HOST_CUSTUM_KEY, &itr->second->doc);
@@ -654,16 +654,16 @@ int HocfgMgr::setupPropByServConfig( IOHand* iohand ) const
     const Value* tagnode = NULL; // cli指定tag属性，优先级最高
     const Value* hostnode = NULL; // cli所在host，优先级其次
     const Value* defnode = NULL; // 缺省配置，优先级最低
-    string cliip = iohand->getProperty("_ip");
-    string tag = iohand->getProperty("tag");
-    string svrnam = iohand->getProperty(SVRNAME_KEY);
+    std::string cliip = iohand->getProperty("_ip");
+    std::string tag = iohand->getProperty("tag");
+    std::string svrnam = iohand->getProperty(SVRNAME_KEY);
     
     Rjson::GetObject(&defnode, "default", customnode);
     Rjson::GetObject(&hostnode, cliip.c_str(), customnode);
     Rjson::GetObject(&tagnode, tag.c_str(), customnode);
 
     int ntmp = 0;
-    string strtmp;
+    std::string strtmp;
     bool bexist = true;
 #define SET_PROP_BY_PRIORITY(Type, cfgkey, val, propKey)              \
     bexist = true;                                                    \

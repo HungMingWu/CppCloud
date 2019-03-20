@@ -11,9 +11,6 @@ Modification :
 #include "comm/public.h"
 #include <string>
 
-
-using namespace std;
-
 class SHttpInvokerMgr
 {
 	SINGLETON_CLASS2(SHttpInvokerMgr)
@@ -24,12 +21,12 @@ public:
 	void setLimitCount( int n );
 
 	// 向服务提供者发出请求，并等待响应回复 （同步）
-	int get( string& resp, const string& path, const string& qstr, const string& svrname );
-	int post( string& resp, const string& path, const string& reqbody, const string& svrname );
+	int get( std::string& resp, const std::string& path, const std::string& qstr, const std::string& svrname );
+	int post( std::string& resp, const std::string& path, const std::string& reqbody, const std::string& svrname );
 
 
 private:
-	string adjustUrlPath( const string& url, const string& path ) const;
+	std::string adjustUrlPath( const std::string& url, const std::string& path ) const;
 
 private:
 	int m_eachLimitCount;

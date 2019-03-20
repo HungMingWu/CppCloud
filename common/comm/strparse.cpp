@@ -4,13 +4,12 @@
 #include "strparse.h"
 
 // ��dv��Ϊ�ָ�����str�����õ��Ľ����ŵ�data����
-int StrParse::SpliteInt(vector<int>& data, const string& str, char dv, int nildef)
+int StrParse::SpliteInt(std::vector<int>& data, const std::string& str, char dv, int nildef)
 {
-    vector<string> vstr;
-    vector<string>::iterator it;
+    std::vector<std::string> vstr;
 
     SpliteStr(vstr, str, dv);
-    it = vstr.begin();
+    auto it = vstr.begin();
     for (; it != vstr.end(); ++it)
     {
         if (it->empty())
@@ -27,7 +26,7 @@ int StrParse::SpliteInt(vector<int>& data, const string& str, char dv, int nilde
 }
 
 // ��dv��Ϊ�ָ�����str�����õ��Ľ����ŵ�data����
-int StrParse::SpliteStr(vector<string>& data, const string& str, char dv)
+int StrParse::SpliteStr(std::vector<std::string>& data, const std::string& str, char dv)
 {
     if (!str.empty())
     {
@@ -39,7 +38,7 @@ int StrParse::SpliteStr(vector<string>& data, const string& str, char dv)
     return 0;
 }
 
-int StrParse::SpliteStr(vector<string>& data, const char* pstr, unsigned int len, char dv)
+int StrParse::SpliteStr(std::vector<std::string>& data, const char* pstr, unsigned int len, char dv)
 {
     if (NULL == pstr) return -1;
 
@@ -48,7 +47,7 @@ int StrParse::SpliteStr(vector<string>& data, const char* pstr, unsigned int len
     {
         if (pstr[i] == dv)
         {
-            string item(pstr+begi, i-begi);
+            std::string item(pstr+begi, i-begi);
             data.push_back(item);
 
             begi = i + 1;
@@ -56,7 +55,7 @@ int StrParse::SpliteStr(vector<string>& data, const char* pstr, unsigned int len
     }
 
     {
-        string item(pstr+begi, len-begi);
+        std::string item(pstr+begi, len-begi);
         data.push_back(item);
     }
 
@@ -65,14 +64,14 @@ int StrParse::SpliteStr(vector<string>& data, const char* pstr, unsigned int len
 
 // @summery: query_string��������, ����qstr��"key1=va11&key2=vv2&key3=123"��ʽ;
 // @param: outPar [out] ���ս�Ҫ���outPar[key1]="val1"..
-int StrParse::SpliteQueryString( map<string, string>& outPar, const string& querystr )
+int StrParse::SpliteQueryString( std::map<std::string, std::string>& outPar, const std::string& querystr )
 {
     int ret = 0;
 
     bool findkey = true;
     int begidx = 0;
-    string key;
-    string value;
+    std::string key;
+    std::string value;
     const char* qstr = querystr.data();
     size_t qslen = querystr.length();
 
@@ -121,15 +120,15 @@ int StrParse::SpliteQueryString( map<string, string>& outPar, const string& quer
 }
 
 // 解析url各部分, proto://host:port/path?qparam
-int StrParse::SplitURL(string& proto, string& host, int& port, string& path, string& qparam, const string& url)
+int StrParse::SplitURL(std::string& proto, std::string& host, int& port, std::string& path, std::string& qparam, const std::string& url)
 {
-    string::size_type pos1 = url.find("://");
-    if (string::npos == pos1) return -1;
+    std::string::size_type pos1 = url.find("://");
+    if (std::string::npos == pos1) return -1;
     proto = url.substr(0, pos1);
     
-    string hostend = url.substr(pos1 + 3);
-    string::size_type pos2 = hostend.find_first_of(":/");
-    if (string::npos == pos2 || '/' == hostend[pos2])
+    std::string hostend = url.substr(pos1 + 3);
+    std::string::size_type pos2 = hostend.find_first_of(":/");
+    if (std::string::npos == pos2 || '/' == hostend[pos2])
     {
         if (proto == "http") port = 80;
         else if (proto == "https") port = 443;
@@ -137,21 +136,21 @@ int StrParse::SplitURL(string& proto, string& host, int& port, string& path, str
     }
     else
     {
-        string portend = hostend.substr(pos2 + 1);
-        string::size_type pos3 = portend.find_first_of("/?");
-        string strport = portend.substr(0, pos3);
+        std::string portend = hostend.substr(pos2 + 1);
+        std::string::size_type pos3 = portend.find_first_of("/?");
+        std::string strport = portend.substr(0, pos3);
         port = atoi(strport.c_str());
     }
 
     host = hostend.substr(0, pos2);
-    string::size_type pos4 = hostend.find("?");
-    string::size_type pos5 = hostend.find("/");
-    if (string::npos != pos4)
+    std::string::size_type pos4 = hostend.find("?");
+    std::string::size_type pos5 = hostend.find("/");
+    if (std::string::npos != pos4)
     {
         qparam = hostend.substr(pos4 + 1);
     }
 
-    if (string::npos != pos5)
+    if (std::string::npos != pos5)
     {
         path = hostend.substr(pos5, pos4 - pos5);
     }
@@ -159,11 +158,11 @@ int StrParse::SplitURL(string& proto, string& host, int& port, string& path, str
     return 0;
 }
 
-int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
+int StrParse::PickOneJson(std::string& ostr, const std::string& src, const std::string& name)
 {
     // תСд
-    string tempstr;
-    string tmpname;
+    std::string tempstr;
+    std::string tmpname;
     int ret = 1;
     bool found = false;
     size_t namelen = name.length();
@@ -200,7 +199,7 @@ int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
         size_t namepos = tempstr.find(tmpname);
 
         // �ҵ�һ����ȫƥ���key
-        while (namepos != string::npos)
+        while (namepos != std::string::npos)
         {
             pchstr = tempstr.data();
             found = true;
@@ -234,7 +233,7 @@ int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
         if (!found) break; // �Ҳ���key
 
         size_t valpos = tempstr.find_first_of(":=", namepos+namelen);
-        if (string::npos == valpos) break;
+        if (std::string::npos == valpos) break;
 
         for (++valpos ;valpos < len && ' ' == pchstr[valpos]; ++valpos) // skip space
         {
@@ -266,7 +265,7 @@ int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
             if (!found)
             {
                 --valpos;
-                valend = string::npos;
+                valend = std::string::npos;
             }
         }
         else
@@ -275,7 +274,7 @@ int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
         }
 
         // ��ȡ���ֵ
-        if (string::npos == valend)
+        if (std::string::npos == valend)
         {
             ostr = tempstr.substr(valpos);
         }
@@ -292,7 +291,7 @@ int StrParse::PickOneJson(string& ostr, const string& src, const string& name)
 }
 
 // @summery: PutOneJson(jobj, "kk", "val1") => jobj="\"kk\": \"val1\"" ;
-bool StrParse::PutOneJson( string& jstr, const string& jkey, const string& jvalue, bool comma_end /*= false*/ )
+bool StrParse::PutOneJson( std::string& jstr, const std::string& jkey, const std::string& jvalue, bool comma_end /*= false*/ )
 {
     if (!jkey.empty())
     {
@@ -309,7 +308,7 @@ bool StrParse::PutOneJson( string& jstr, const string& jkey, const string& jvalu
     return true;
 }
 
-bool StrParse::PutOneJson( string& jstr, const string& jkey, int jval, bool comma_end /*= false*/ )
+bool StrParse::PutOneJson( std::string& jstr, const std::string& jkey, int jval, bool comma_end /*= false*/ )
 {
     if (!jkey.empty())
     {
@@ -326,7 +325,7 @@ bool StrParse::PutOneJson( string& jstr, const string& jkey, int jval, bool comm
     return true;
 }
 
-void StrParse::AdjustPath( string& path, bool useend, char dv /*= '/'*/ )
+void StrParse::AdjustPath( std::string& path, bool useend, char dv /*= '/'*/ )
 {
 	if (!path.empty())
 	{
@@ -349,7 +348,7 @@ void StrParse::AdjustPath( string& path, bool useend, char dv /*= '/'*/ )
 	}
 }
 
-bool StrParse::IsCharacter(const string& str, bool inc_digit)
+bool StrParse::IsCharacter(const std::string& str, bool inc_digit)
 {
     bool ret = true;
     size_t len = str.length();
@@ -370,7 +369,7 @@ bool StrParse::IsCharacter(const string& str, bool inc_digit)
     return ret;
 }
 
-bool StrParse::IsCharacter(const string& str, const string& excludeStr, bool inc_digit)
+bool StrParse::IsCharacter(const std::string& str, const std::string& excludeStr, bool inc_digit)
 {
     bool ret = true;
     size_t len = str.length();
@@ -404,7 +403,7 @@ bool StrParse::IsCharacter(const string& str, const string& excludeStr, bool inc
     return ret;
 }
 
-bool StrParse::IsNumberic(const string& str)
+bool StrParse::IsNumberic(const std::string& str)
 {
     bool ret = true;
     size_t len = str.length();
@@ -423,7 +422,7 @@ bool StrParse::IsNumberic(const string& str)
     return ret;
 }
 
-int StrParse::AppendFormat(string& ostr, const char* fmt, ...)
+int StrParse::AppendFormat(std::string& ostr, const char* fmt, ...)
 {
     va_list ap;
     int ret;
@@ -440,7 +439,7 @@ int StrParse::AppendFormat(string& ostr, const char* fmt, ...)
     return ret;
 }
 
-string StrParse::Format( const char* fmt, ... )
+std::string StrParse::Format( const char* fmt, ... )
 {
 	long ret;
     va_list ap;
@@ -463,7 +462,7 @@ string StrParse::Format( const char* fmt, ... )
 	return buff_alloc?buff_alloc:buff;
 }
 
-string StrParse::Itoa( int n )
+std::string StrParse::Itoa( int n )
 {
     return Format("%d", n);
 }

@@ -9,7 +9,7 @@ ServiceItem::ServiceItem( void ): pvd_ok(0), pvd_ng(0), ivk_ok(0), ivk_ng(0)
 
 }
 
-int ServiceItem::parse0( const string& regname, CliBase* cli, int prvdid )
+int ServiceItem::parse0( const std::string& regname, CliBase* cli, int prvdid )
 {
 	svrid = cli->getIntProperty("svrid");
 	ERRLOG_IF1RET_N(regname.empty() || svrid <= 0, -70, 
@@ -57,7 +57,7 @@ int ServiceItem::parse( CliBase* cli )
 	return 0;
 }
 
-void ServiceItem::getJsonStr( string& strjson, int oweight ) const
+void ServiceItem::getJsonStr( std::string& strjson, int oweight ) const
 {
 	strjson.append("{");
 	StrParse::PutOneJson(strjson, "regname", regname, true);
@@ -77,7 +77,7 @@ void ServiceItem::getJsonStr( string& strjson, int oweight ) const
 	strjson.append("}");
 }
 
-void ServiceItem::getCalcJson( string& strjson, int oweight ) const
+void ServiceItem::getCalcJson( std::string& strjson, int oweight ) const
 {
 	getJsonStr(strjson, oweight);
 }
@@ -104,14 +104,14 @@ int ServiceItem::score( short oidc, short orack ) const
 	return score;
 }
 
-ServiceProvider::ServiceProvider( const string& svrName ): m_regName(svrName)
+ServiceProvider::ServiceProvider( const std::string& svrName ): m_regName(svrName)
 {
 
 }
 
 ServiceProvider::~ServiceProvider( void )
 {
-	map<CliBase*, SVRITEM_MAP>::iterator itr = m_svrItems.begin();
+	auto itr = m_svrItems.begin();
 	for (; itr != m_svrItems.end(); ++itr)
 	{
 		//CliBase* first = itr->first;
@@ -140,7 +140,7 @@ int ServiceProvider::setItem( CliBase* cli, int prvdid )
 
 	if (NULL == pitem)
 	{
-		string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, m_regName.c_str(), prvdid);
+		std::string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, m_regName.c_str(), prvdid);
 
 		pitem = new ServiceItem;
 		int ret = pitem->parse0(m_regName, cli, prvdid);
@@ -153,7 +153,7 @@ int ServiceProvider::setItem( CliBase* cli, int prvdid )
 		}
 
 		// 设置属性标记，以便在广播给其他serv时能够还原提供的服务
-		string provval = cli->getProperty(SVRPROVIDER_CLI_KEY);
+		std::string provval = cli->getProperty(SVRPROVIDER_CLI_KEY);
 		cli->setProperty( SVRPROVIDER_CLI_KEY, 
 			provval.empty()? regname2: (regname2 + "+" + provval) );
 	}
@@ -169,7 +169,7 @@ void ServiceProvider::setStat( CliBase* cli, int prvdid, int pvd_ok, int pvd_ng,
 		auto itr2 = itr->second.find(prvdid);
 		if ( itr2 != itr->second.end() )
 		{
-			string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, m_regName.c_str(), prvdid);
+			std::string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, m_regName.c_str(), prvdid);
 			ServiceItem* itm = itr2->second;
 
 			#define IFUPDATESTAT(name) if (name > 0) { itm->name = name; cli->setIntProperty(regname2+":" #name, name); }
@@ -205,7 +205,7 @@ bool ServiceProvider::removeItme( CliBase* cli )
 }
 
 // 返回json-array[]形式
-int ServiceProvider::getAllJson( string& strjson ) const
+int ServiceProvider::getAllJson( std::string& strjson ) const
 {
 	strjson.append("[");
 	int i = 0;
@@ -230,11 +230,11 @@ int ServiceProvider::getAllJson( string& strjson ) const
  * @return: 返回可用服务个数
  * @param: strjson [out] 返回json字符串[array格式]
  **/
-int ServiceProvider::query( string& strjson, short idc, short rack, short version, short limit ) const
+int ServiceProvider::query( std::string& strjson, short idc, short rack, short version, short limit ) const
 {
 	// sort all item by score
-	map<int, ServiceItem*> sortItemMap;
-	map<CliBase*, SVRITEM_MAP>::const_iterator itr = m_svrItems.begin();
+	std::map<int, ServiceItem*> sortItemMap;
+	auto itr = m_svrItems.begin();
 	for (; itr != m_svrItems.end(); ++itr)
 	{
 		for (auto itMap : itr->second)
@@ -256,7 +256,7 @@ int ServiceProvider::query( string& strjson, short idc, short rack, short versio
 	
 	short count = 0;
 	strjson.append("[");
-	map<int, ServiceItem*>::reverse_iterator ritr = sortItemMap.rbegin();
+	auto ritr = sortItemMap.rbegin();
 	for (; count < limit && sortItemMap.rend() != ritr; ++ritr, ++count)
 	{
 		ServiceItem* ptr = ritr->second;

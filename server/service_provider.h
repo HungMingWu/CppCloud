@@ -12,32 +12,31 @@ Modification :
 #include <map>
 #include "cloud/svrprop.h"
 
-using namespace std;
 class CliBase;
 
 struct ServiceItem : public SvrProp
 {
-	string regname2;
+	std::string regname2;
 	unsigned pvd_ok;
 	unsigned pvd_ng;
 	unsigned ivk_ok; // 调用者统计 全量
     unsigned ivk_ng; // 调用者统计 全量
 	ServiceItem( void );
 
-	int parse0( const string& name, CliBase* cli, int prvdid );
+	int parse0( const std::string& name, CliBase* cli, int prvdid );
 	int parse( CliBase* cli );
-	void getJsonStr( string& strjson, int oweight = 0 ) const;
-	void getCalcJson( string& strjson , int oweight) const;
+	void getJsonStr( std::string& strjson, int oweight = 0 ) const;
+	void getCalcJson( std::string& strjson , int oweight) const;
 
 	int score( short idc, short rack ) const;
 };
 
-typedef map<int, ServiceItem*> SVRITEM_MAP;
+typedef std::map<int, ServiceItem*> SVRITEM_MAP;
 
 class ServiceProvider
 {
 public:
-	ServiceProvider( const string& svrName );
+	ServiceProvider( const std::string& svrName );
 	~ServiceProvider( void );
 
 	bool hasItem( CliBase* cli, int prvdid ) const;
@@ -47,14 +46,14 @@ public:
 	bool removeItme( CliBase* cli );
 
 	// 计算返回可用服务
-	int query( string& jstr, short idc, short rack, short version, short limit ) const;
-	int getAllJson( string& strjson ) const;
+	int query( std::string& jstr, short idc, short rack, short version, short limit ) const;
+	int getAllJson( std::string& strjson ) const;
 
 private:
 
 private:
-	const string m_regName;
-	map<CliBase*, SVRITEM_MAP> m_svrItems;
+	const std::string m_regName;
+	std::map<CliBase*, SVRITEM_MAP> m_svrItems;
 };
 
 #endif

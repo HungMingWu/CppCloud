@@ -5,11 +5,9 @@
 #include <sys/epoll.h>
 
 
-using namespace std;
-
 // 标准生成模板
-static map<string, HEpBase*> s_stdobj;
-static map<string, HEpBase::ProcOneFunT> s_procfunc;
+static std::map<std::string, HEpBase*> s_stdobj;
+static std::map<std::string, HEpBase::ProcOneFunT> s_procfunc;
 
 HEpEvFlag::HEpEvFlag(void): m_epfd(INVALID_FD), m_actFd(INVALID_FD), m_eventFg(0), m_ptr(NULL)
 {}
@@ -156,7 +154,7 @@ HEpBase::ProcOneFunT HEpBase::GetProcFunc(const char* regname)
 {
     if (regname)
     {
-        map<string, ProcOneFunT>::iterator it = s_procfunc.find(regname);
+        auto it = s_procfunc.find(regname);
         if (it != s_procfunc.end())
         {
             return it->second;
@@ -170,7 +168,7 @@ HEpBase* HEpBase::New(const char* name)
 {
     if (name)
     {
-        map<string, HEpBase*>::iterator it = s_stdobj.find(name);
+        auto it = s_stdobj.find(name);
         if (it != s_stdobj.end())
         {
             return it->second->clone();

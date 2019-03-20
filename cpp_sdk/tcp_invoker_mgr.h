@@ -13,10 +13,8 @@ Modification :
 #include <map>
 #include <list>
 
-
-using namespace std;
 class TcpInvoker;
-typedef map< string, list<TcpInvoker*> > IOVOKER_POOLT;
+typedef std::map< std::string, std::list<TcpInvoker*> > IOVOKER_POOLT;
 
 
 class TcpInvokerMgr
@@ -29,11 +27,11 @@ public:
 	void setLimitCount( int n );
 
 	// 向服务提供者发出请求，并等待响应回复 （同步）
-	int request( string& resp, const string& reqmsg, const string& svrname );
-	int requestByHost( string& resp, const string& reqmsg, const string& hostp, int timeout_sec );
+	int request( std::string& resp, const std::string& reqmsg, const std::string& svrname );
+	int requestByHost( std::string& resp, const std::string& reqmsg, const std::string& hostp, int timeout_sec );
 
 private:
-	TcpInvoker* getInvoker( const string& hostport, int timeout_sec );
+	TcpInvoker* getInvoker( const std::string& hostport, int timeout_sec );
 	void relInvoker( TcpInvoker* ivk );
 
 private:

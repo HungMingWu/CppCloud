@@ -13,7 +13,6 @@ Modification :
 #include <string>
 #include "clibase.h"
 
-using namespace std;
 class IOHand;
 
 class OuterServ: public CliBase
@@ -23,7 +22,7 @@ public:
     {
         int next_svrid;
         int mtime;
-        vector<int> path;
+        std::vector<int> path;
 
         RoutePath(void):next_svrid(0),mtime(0){}
     };
@@ -32,7 +31,7 @@ public:
     OuterServ();
     
     void init( int svrid );
-    int setRoutePath( const string& rp );
+    int setRoutePath( const std::string& rp );
     IOHand* getNearSendServ( void );
 
 protected: // interface IEPollRun
@@ -40,7 +39,7 @@ protected: // interface IEPollRun
     //virtual int qrun( int flag, long p2 );
 
 protected:
-    map<string, RoutePath> m_routpath;
+    std::map<std::string, RoutePath> m_routpath;
     int m_svrid;
 };
 

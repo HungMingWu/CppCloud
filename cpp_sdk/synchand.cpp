@@ -41,7 +41,7 @@ int SyncHand::putRequest( unsigned rspid, unsigned seqid, int timeout_sec )
     return 0;
 }
 
-int SyncHand::waitResponse( string& resp, unsigned rspid, unsigned seqid )
+int SyncHand::waitResponse( std::string& resp, unsigned rspid, unsigned seqid )
 {
     unsigned key = rspid;
     key |= (seqid << 16);
@@ -49,7 +49,7 @@ int SyncHand::waitResponse( string& resp, unsigned rspid, unsigned seqid )
     time_t now = time(NULL);
 
     pthread_mutex_lock(&m_mutex);
-    map<unsigned, MsgItem>::iterator it = m_msgItems.find(key);
+    auto it = m_msgItems.find(key);
     if (m_msgItems.end() != it)
     {
         if (2 == it->second.step)
@@ -98,14 +98,14 @@ void SyncHand::delRequest( unsigned rspid, unsigned seqid )
     pthread_mutex_unlock(&m_mutex);
 }
 
-int SyncHand::notify( unsigned rspid, unsigned seqid, const string& msg )
+int SyncHand::notify( unsigned rspid, unsigned seqid, const std::string& msg )
 {
     int ret = 1;
     unsigned key = rspid;
     key |= (seqid << 16);
 
     pthread_mutex_lock(&m_mutex);
-    map<unsigned, MsgItem>::iterator it = m_msgItems.find(key);
+    auto it = m_msgItems.find(key);
     if (m_msgItems.end() != it)
     {
         it->second.resp = msg;

@@ -14,15 +14,11 @@ Modification :
 #include "comm/public.h"
 #include "comm/i_taskrun.h"
 
-
-using namespace std;
-
-
 class SvrStat : public ITaskRun2
 {
     struct CountEntry
     {
-        string regname;
+        std::string regname;
         int svrid; // 当作为提供者身份时 可为0
         int prvdid;
 
@@ -36,7 +32,7 @@ class SvrStat : public ITaskRun2
 
         CountEntry(): svrid(0), prvdid(0), pvd_ok(0), pvd_ng(0), 
             ivk_ok(0), ivk_ng(0), ivk_dok(0), ivk_dng(0) {}
-        string jsonStr( void ) const;
+        std::string jsonStr( void ) const;
         void cleanDeltaCount( void );
     };
 
@@ -46,9 +42,9 @@ class SvrStat : public ITaskRun2
 
 public:
     // 服务提供者的统计计数
-    void addPrvdCount( const string& regname, bool isOk, int prvdid = 0, int svrid = 0, int dcount = 1 );
+    void addPrvdCount( const std::string& regname, bool isOk, int prvdid = 0, int svrid = 0, int dcount = 1 );
     // 调用者（消费者）统计调用信息
-    void addInvkCount( const string& regname, bool isOk, int prvdid = 0, int svrid = 0, int dcount = 1 );
+    void addInvkCount( const std::string& regname, bool isOk, int prvdid = 0, int svrid = 0, int dcount = 1 );
 
     // 设置上报延时 (参数为0时关闭上报消费统计)
     void setDelaySecond( int sec );
@@ -58,7 +54,7 @@ public:
     virtual int run(int p1, long p2);
 
 private:
-    CountEntry* _getEntry( const string& regname, int svrid, int prvdid );
+    CountEntry* _getEntry( const std::string& regname, int svrid, int prvdid );
     int appendTimerq( void );
 
 private:
@@ -66,7 +62,7 @@ private:
     bool m_inqueue;
     int m_delayTimeSec;
     
-    map<string, CountEntry> m_stat;
+    std::map<std::string, CountEntry> m_stat;
 };
 
 #endif

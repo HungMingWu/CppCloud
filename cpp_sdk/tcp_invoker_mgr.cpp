@@ -31,7 +31,7 @@ void TcpInvokerMgr::setLimitCount( int n )
      m_eachLimitCount = n;
 }
 
-TcpInvoker* TcpInvokerMgr::getInvoker( const string& hostport, int timeout_sec )
+TcpInvoker* TcpInvokerMgr::getInvoker( const std::string& hostport, int timeout_sec )
 {
     TcpInvoker* ivk = NULL;
     {
@@ -77,7 +77,7 @@ void TcpInvokerMgr::relInvoker( TcpInvoker* ivk )
     }
 }
 
-int TcpInvokerMgr::requestByHost( string& resp, const string& reqmsg, const string& hostp, int timeout_sec )
+int TcpInvokerMgr::requestByHost( std::string& resp, const std::string& reqmsg, const std::string& hostp, int timeout_sec )
 {
     static const int check_more_dtsec = 30*60; // 超过此时间的连接可能会失败，增加一次重试
     static const int max_trycount = 2;

@@ -52,7 +52,7 @@ void CliBase::setProperty( const string& key, int val )
 
 string CliBase::getProperty( const string& key ) const
 {
-	map<string, string>::const_iterator itr = m_cliProp.find(key);
+	auto itr = m_cliProp.find(key);
 	if (itr != m_cliProp.end())
 	{
 		return itr->second;
@@ -102,7 +102,7 @@ int CliBase::getIntProperty( const string& key ) const
 
 int CliBase::serialize( string& outstr ) const
 {
-	map<string, string>::const_iterator it = m_cliProp.begin();
+	auto it = m_cliProp.begin();
 	for (; it != m_cliProp.end(); ++it)
 	{
 		StrParse::PutOneJson(outstr, it->first, it->second, true);

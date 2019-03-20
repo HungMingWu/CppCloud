@@ -13,13 +13,11 @@ Modification :
 #include <string>
 #include <map>
 
-using namespace std;
-
 class SyncHand
 {
     struct MsgItem
     {
-        string resp;
+        std::string resp;
         pthread_cond_t m_cond;
         time_t expire_time;
         int timeout_sec;
@@ -34,13 +32,13 @@ public:
     ~SyncHand( void );
 
     int putRequest( unsigned rspid, unsigned seqid, int timeout_sec );
-    int waitResponse( string& resp, unsigned rspid, unsigned seqid );
+    int waitResponse( std::string& resp, unsigned rspid, unsigned seqid );
     void delRequest( unsigned rspid, unsigned seqid );
 
-    int notify( unsigned rspid, unsigned seqid, const string& msg );
+    int notify( unsigned rspid, unsigned seqid, const std::string& msg );
 
 private:
-    map<unsigned, MsgItem> m_msgItems;
+    std::map<unsigned, MsgItem> m_msgItems;
     pthread_mutex_t m_mutex;
 };
 

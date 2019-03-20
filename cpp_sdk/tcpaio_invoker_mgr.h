@@ -14,10 +14,7 @@ Modification :
 #include <map>
 #include <list>
 
-
-using namespace std;
 class TcpAioInvoker;
-
 
 class TcpAioInvokerMgr //: public Thread
 {
@@ -29,18 +26,18 @@ public:
 	void init( int epfd );
 
 	// 向服务提供者发出请求，并等待响应回复 （同步）
-	int request( string& resp, const string& reqmsg, const string& svrname );
-	int requestByHost( string& resp, const string& reqmsg, const string& hostp, int timeout_sec );
+	int request( std::string& resp, const std::string& reqmsg, const std::string& svrname );
+	int requestByHost( std::string& resp, const std::string& reqmsg, const std::string& hostp, int timeout_sec );
 
 private:
-	TcpAioInvoker* getInvoker( const string& hostport, int timeout_sec );
+	TcpAioInvoker* getInvoker( const std::string& hostport, int timeout_sec );
 
 	//virtual void* run(void);
 
 private:
 	int m_invokerTimOut_sec;
 	int m_epfd;
-	map< string, TcpAioInvoker* > m_pool;
+	std::map< std::string, TcpAioInvoker* > m_pool;
 };
 
 #endif

@@ -11,7 +11,7 @@ ProvdMgr::ProvdMgr( void )
 
 void ProvdMgr::uninit( void )
 {
-    map<string, ProviderItem*>::iterator itr = m_provider_apps.begin();
+    auto itr = m_provider_apps.begin();
     for (; itr != m_provider_apps.end(); ++itr)
     {
         IFDELETE(itr->second);
@@ -22,7 +22,7 @@ void ProvdMgr::uninit( void )
 ProviderItem* ProvdMgr::getProvider( const string& regname, int prvdid )
 {
     string key = regname + "%" + _N(prvdid);
-    map<string, ProviderItem*>::const_iterator itr = m_provider_apps.find(key);
+    auto itr = m_provider_apps.find(key);
     if (m_provider_apps.end() != itr)
     {
         return itr->second;
@@ -41,7 +41,7 @@ int ProvdMgr::ReconnectNotifyCB( void* param )
 int ProvdMgr::reconnectNotifyCB( void* param )
 {
     int ret = 0;
-    map<string, ProviderItem*>::iterator itr = m_provider_apps.begin();
+    auto itr = m_provider_apps.begin();
     for (; itr != m_provider_apps.end(); ++itr)
     {
         ret |= postOut(itr->second->regname, itr->second->prvdid);

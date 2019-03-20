@@ -32,7 +32,7 @@ void PeerServ::Init( int mysvrid )
 	s_my_svrid = mysvrid;
 }
 
-int PeerServ::init( const string& rhost, int port, int epfd )
+int PeerServ::init( const std::string& rhost, int port, int epfd )
 {
 	m_rhost = rhost;
 	m_epfd = epfd;
@@ -113,9 +113,9 @@ int PeerServ::taskRun( int flag, long p2 )
 {
 	// 向远端serv发起连接
 	// 先检查是否已有同一ID的远端serv,有则无需发起
-	string rsvrid = StrParse::Itoa(m_svrid);
-	string alias_beg = string(SERV_IN_ALIAS_PREFIX) + rsvrid + "A"; // "A"是排除serv11进入serv1的范围
-	string alias_end = string(SERV_IN_ALIAS_PREFIX) + rsvrid + "z"; // serv1C serv1S
+	std::string rsvrid = StrParse::Itoa(m_svrid);
+	std::string alias_beg = std::string(SERV_IN_ALIAS_PREFIX) + rsvrid + "A"; // "A"是排除serv11进入serv1的范围
+	std::string alias_end = std::string(SERV_IN_ALIAS_PREFIX) + rsvrid + "z"; // serv1C serv1S
 	int ret = 0;
 
 	CliMgr::AliasCursor finder(alias_beg, alias_end);
@@ -176,7 +176,7 @@ int PeerServ::taskRun( int flag, long p2 )
 // 准备好发送的包,等连接OK后发出
 int PeerServ::prepareWhoIam( void )
 {
-	string whoIamJson;
+	std::string whoIamJson;
 
 	whoIamJson += "{";
 	StrParse::PutOneJson(whoIamJson, CONNTERID_KEY, s_my_svrid, true);

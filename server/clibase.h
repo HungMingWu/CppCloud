@@ -54,7 +54,7 @@ protected:
 	static int s_my_svrid;
 
 public:
-	map<string, string> m_cliProp; // 客户属性
+	std::map<std::string, std::string> m_cliProp; // 客户属性
 	int m_era; // 属性改变，版本递增
 };
 

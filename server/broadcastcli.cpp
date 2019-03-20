@@ -267,7 +267,7 @@ string BroadCastCli::diffOuterCliEra( int servid, const string& erastr )
 
 	string ret;
 	vector<string> vecitem;
-    set<CliBase*> appset;
+    std::set<CliBase*> appset;
     CliBase* ptrtmp = NULL;
     bool retall = (finder.empty() && !erastr.empty());
 
@@ -315,7 +315,7 @@ string BroadCastCli::diffOuterCliEra( int servid, const string& erastr )
 		}
 	}
 
-    set<CliBase*>::const_iterator itr = appset.begin();
+    auto itr = appset.begin();
     for (; itr != appset.end(); ++itr) // 未上报的执行清除
     {
         CliBase* itptr = *itr;

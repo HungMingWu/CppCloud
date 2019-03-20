@@ -22,7 +22,7 @@ ConfigMgr::~ConfigMgr( void )
 void ConfigMgr::uninit( void )
 {
     std::unique_lock lock(g_rwLock0);
-    map<string, ConfJson*>::iterator it = m_jcfgs.begin();
+    auto it = m_jcfgs.begin();
     for (; m_jcfgs.end() != it; ++it)
     {
         delete it->second;
@@ -43,12 +43,12 @@ int ConfigMgr::initLoad( const string& confName )
 {
     static const char seperator = ' ';
     //static const int timeout_sec = 3;
-    vector<string> vFname;
+    std::vector<std::string> vFname;
     int ret = StrParse::SpliteStr(vFname, confName, seperator);
     ERRLOG_IF1RET_N(ret, -50, "CFGINIT| msg=splite to vector fail %d| confName=%s", ret, confName.c_str());
 
     m_mainConfName = CloudApp::Instance()->getMConf();
-    vector<string>::const_iterator cit = vFname.begin();
+    auto cit = vFname.begin();
     std::unique_lock lock(g_rwLock0);
     static bool cbOk = false;
     for (; cit != vFname.end(); ++cit)
@@ -117,7 +117,7 @@ int ConfigMgr::onCMD_EVNOTIFY_REQ( void* ptr )
     // 全部配置reload
     {
         std::shared_lock lock(g_rwLock0);
-        map<string, ConfJson*>::iterator it = m_jcfgs.begin();
+        auto it = m_jcfgs.begin();
         for (; m_jcfgs.end() != it; ++it)
         {
             if (it->second->getMtime() < mtime)
@@ -192,7 +192,7 @@ int ConfigMgr::OnReconnectNotifyCB( void* param )
 int ConfigMgr::onReconnectNotifyCB( void* param )
 {
     std::shared_lock lock(g_rwLock0);
-    map<string, ConfJson*>::iterator it = m_jcfgs.begin();
+    auto it = m_jcfgs.begin();
     for (; m_jcfgs.end() != it; ++it)
     {
         const string& filename = it->first;
@@ -215,7 +215,7 @@ int ConfigMgr::onReconnectNotifyCB( void* param )
 
 // ValT must be [string, int, map<string,string>, map<string,int>, vector<string>, vector<int>]
 template<class ValT>
-int ConfigMgr::_query( ValT& oval, const string& fullqkey, map<string, ValT >& cacheMap, bool wideVal ) const
+int ConfigMgr::_query( ValT& oval, const std::string& fullqkey, std::map<std::string, ValT >& cacheMap, bool wideVal ) const
 {
     static const char seperator_ch = '/';
     {
@@ -223,8 +223,8 @@ int ConfigMgr::_query( ValT& oval, const string& fullqkey, map<string, ValT >& c
         IFRETURN_N(0 == _tryGetFromCache(oval, fullqkey, cacheMap), 0);
     }
     
-    string fname;
-    string qkey;
+    std::string fname;
+    std::string qkey;
     if (!fullqkey.empty())
     {
         if (seperator_ch == fullqkey[0]) // 使用主配置
@@ -247,7 +247,7 @@ int ConfigMgr::_query( ValT& oval, const string& fullqkey, map<string, ValT >& c
     int ret = 0;
     {
         std::unique_lock lock(g_rwLock0);
-        map<string,ConfJson*>::const_iterator it = m_jcfgs.find(fname);
+        auto it = m_jcfgs.find(fname);
         ERRLOG_IF1RET_N(m_jcfgs.end() == it, -55, "CONFQUERY| msg=invalid filename| fullqkey=%s", fullqkey.c_str());
         ret = it->second->query(oval, qkey, wideVal);
         // if (0 == ret)
@@ -271,10 +271,10 @@ void ConfigMgr::_clearCache( void )
 
 // 在缓存当中查询，成功查到返回0，不存在返回1 
 template<class ValT>
-int ConfigMgr::_tryGetFromCache( ValT& oval, const string& fullqkey, const map<string, ValT >& cacheMap ) const
+int ConfigMgr::_tryGetFromCache( ValT& oval, const string& fullqkey, const std::map<std::string, ValT >& cacheMap ) const
 {
     int ret = 1;
-    typedef typename map<string, ValT >::const_iterator CONST_INTERATOR;
+    typedef typename std::map<std::string, ValT >::const_iterator CONST_INTERATOR;
 
     CONST_INTERATOR itr = cacheMap.find(fullqkey);
     if (cacheMap.end() != itr)
@@ -286,28 +286,28 @@ int ConfigMgr::_tryGetFromCache( ValT& oval, const string& fullqkey, const map<s
     return ret;
 }
 
-int ConfigMgr::query( int& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( int& oval, const std::string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheInt, wideVal);
 }
-int ConfigMgr::query( string& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( std::string& oval, const std::string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheStr, wideVal);
 }
 
-int ConfigMgr::query( map<string, string>& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( std::map<std::string, std::string>& oval, const string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheMapStr, wideVal);
 }
-int ConfigMgr::query( map<string, int>& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( std::map<std::string, int>& oval, const std::string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheMapInt, wideVal);
 }
-int ConfigMgr::query( vector<string>& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( std::vector<std::string>& oval, const std::string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheVecStr, wideVal);
 }
-int ConfigMgr::query( vector<int>& oval, const string& fullqkey, bool wideVal )
+int ConfigMgr::query( std::vector<int>& oval, const std::string& fullqkey, bool wideVal )
 {
     return _query(oval, fullqkey, m_cacheVecInt, wideVal);
 }

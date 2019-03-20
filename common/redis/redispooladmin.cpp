@@ -92,7 +92,7 @@ int RedisConnPoolAdmin::LoadPoolFromFile( const char* file )
             ret = ERR_RDS_PARSE_TAG;
         }
     }
-    catch(runtime_error& err)
+    catch(std::runtime_error& err)
     {
         ret = ERR_RDS_LOADCONF;
     }

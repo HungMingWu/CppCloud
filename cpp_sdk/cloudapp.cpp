@@ -30,7 +30,7 @@ CloudApp::CloudApp()
 int CloudApp::init( int epfd, const string& svrhost_port, const string& appname )
 {
 	const int connect_timeout_sec = 3;
-	vector<string> vec;
+	std::vector<std::string> vec;
 	int ret = StrParse::SpliteStr(vec, svrhost_port, ':');
 	ERRLOG_IF1RET_N(ret || vec.size() < 2, -24, 
 		"ClOUDAPP_INIT| msg=invalid host config| config=%s", svrhost_port.c_str());

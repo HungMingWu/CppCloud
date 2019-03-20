@@ -13,8 +13,7 @@ Modification :
 #include <map>
 #include <vector>
 
-using namespace std;
-typedef void (*CONF_CHANGE_CB)(const string& confname);
+typedef void (*CONF_CHANGE_CB)(const std::string& confname);
 class ConfJson;
 
 class ConfigMgr
@@ -32,8 +31,8 @@ public:
     ~ConfigMgr( void );
 
 public:
-    int initLoad( const string& confName );
-    //void setMainName( const string& mainConf );
+    int initLoad( const std::string& confName );
+    //void setMainName( const std::string& mainConf );
     void uninit( void );
     void setChangeCallBack( CONF_CHANGE_CB cb );
 
@@ -43,12 +42,12 @@ public:
      * @remart: thread-safe method
      * @return: if success return 0; 
     ***/
-    int query( int& oval, const string& fullqkey, bool wideVal );
-    int query( string& oval, const string& fullqkey, bool wideVal );
-    int query( map<string, string>& oval, const string& fullqkey, bool wideVal );
-    int query( map<string, int>& oval, const string& fullqkey, bool wideVal );
-    int query( vector<string>& oval, const string& fullqkey, bool wideVal );
-    int query( vector<int>& oval, const string& fullqkey, bool wideVal );
+    int query( int& oval, const std::string& fullqkey, bool wideVal );
+    int query( std::string& oval, const std::string& fullqkey, bool wideVal );
+    int query( std::map<std::string, std::string>& oval, const std::string& fullqkey, bool wideVal );
+    int query( std::map<std::string, int>& oval, const std::string& fullqkey, bool wideVal );
+    int query( std::vector<std::string>& oval, const std::string& fullqkey, bool wideVal );
+    int query( std::vector<int>& oval, const std::string& fullqkey, bool wideVal );
     
 
 private:
@@ -56,23 +55,23 @@ private:
 
     // ValT must be [string, int, map<string,string>, map<string,int>, vector<string>, vector<int>]
     template<class ValT>
-    int _query( ValT& oval, const string& fullqkey, map<string, ValT >& cacheMap, bool wideVal ) const;
+    int _query( ValT& oval, const std::string& fullqkey, std::map<std::string, ValT >& cacheMap, bool wideVal ) const;
     template<class ValT>
-    int _tryGetFromCache( ValT& oval, const string& fullqkey, const map<string, ValT >& cacheMap ) const;
+    int _tryGetFromCache( ValT& oval, const std::string& fullqkey, const std::map<std::string, ValT >& cacheMap ) const;
 
     
 private:
-    string m_mainConfName; // 主配置文件名
-    map<string, ConfJson*> m_jcfgs;
+    std::string m_mainConfName; // 主配置文件名
+    std::map<std::string, ConfJson*> m_jcfgs;
     CONF_CHANGE_CB m_changeCB;
 
     // 缓存
-    map<string, string> m_cacheStr;
-    map<string, int> m_cacheInt;
-    map<string, map<string, string> > m_cacheMapStr;
-    map<string, map<string, int> > m_cacheMapInt;
-    map<string, vector<string> > m_cacheVecStr;
-    map<string, vector<int> > m_cacheVecInt;
+    std::map<std::string, std::string> m_cacheStr;
+    std::map<std::string, int> m_cacheInt;
+    std::map<std::string, std::map<std::string, std::string> > m_cacheMapStr;
+    std::map<std::string, std::map<std::string, int> > m_cacheMapInt;
+    std::map<std::string, std::vector<std::string> > m_cacheVecStr;
+    std::map<std::string, std::vector<int> > m_cacheVecInt;
 };
 
 #endif

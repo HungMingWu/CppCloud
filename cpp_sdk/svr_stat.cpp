@@ -3,10 +3,10 @@
 #include "cloud/switchhand.h"
 #include "cloudapp.h"
 
-string SvrStat::CountEntry::jsonStr( void ) const
+std::string SvrStat::CountEntry::jsonStr( void ) const
 {
     bool valid = false;
-    string jmsg("{");
+    std::string jmsg("{");
 
     StrParse::PutOneJson(jmsg, "regname", regname, true);
 #define PUTJSON(keyname) if (keyname > 0) { valid = true; \
@@ -40,9 +40,9 @@ SvrStat::~SvrStat( void )
     
 }
 
-SvrStat::CountEntry* SvrStat::_getEntry( const string& regname, int svrid, int prvdid )
+SvrStat::CountEntry* SvrStat::_getEntry( const std::string& regname, int svrid, int prvdid )
 {
-    const string key = regname + _F("-%d-%d", svrid, prvdid);
+    const std::string key = regname + _F("-%d-%d", svrid, prvdid);
     auto it = m_stat.find(key);
 
     if (it != m_stat.end())
@@ -56,7 +56,7 @@ SvrStat::CountEntry* SvrStat::_getEntry( const string& regname, int svrid, int p
     return &m_stat[key];
 }
 
-void SvrStat::addPrvdCount( const string& regname, bool isOk, int prvdid, int svrid, int dcount )
+void SvrStat::addPrvdCount( const std::string& regname, bool isOk, int prvdid, int svrid, int dcount )
 {
     std::unique_lock lock(m_rwLock);
     CountEntry* stat = _getEntry(regname, svrid, prvdid);
@@ -73,7 +73,7 @@ void SvrStat::addPrvdCount( const string& regname, bool isOk, int prvdid, int sv
 }
 
 // param: svrid 要设置服务提供方里的增量成员ivk_dok，必须要提供目标svrid
-void SvrStat::addInvkCount( const string& regname, bool isOk, int prvdid, int svrid, int dcount )
+void SvrStat::addInvkCount( const std::string& regname, bool isOk, int prvdid, int svrid, int dcount )
 {
     IFRETURN(m_delayTimeSec <= 0);
     
@@ -105,14 +105,14 @@ int SvrStat::qrun( int flag, long p2 )
 	m_inqueue = false;
 	if (0 == flag)
     {
-        string msg("[");
+        std::string msg("[");
 
         int cnt = 0;
         {
             std::shared_lock lock(m_rwLock);
             for (auto it : m_stat)
             {
-                string entryJson = it.second.jsonStr();
+                std::string entryJson = it.second.jsonStr();
                 if (!entryJson.empty())
                 {
                     if (cnt > 0) msg += ",";

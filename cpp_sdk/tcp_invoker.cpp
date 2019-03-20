@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-TcpInvoker::TcpInvoker( const string& hostport ): m_fd(INVALID_FD), 
+TcpInvoker::TcpInvoker( const std::string& hostport ): m_fd(INVALID_FD),
     m_reqcount(0), m_seqid(0), m_timeout_sec(3), m_begtime(0), m_atime(0), 
     m_broker(true), m_waitRsp(false)
 {
@@ -18,7 +18,7 @@ TcpInvoker::TcpInvoker( const string& hostport ): m_fd(INVALID_FD),
     }
 }
 
-TcpInvoker::TcpInvoker( const string& host, int port ): m_fd(INVALID_FD), 
+TcpInvoker::TcpInvoker( const std::string& host, int port ): m_fd(INVALID_FD),
     m_reqcount(0), m_seqid(0), m_timeout_sec(3), m_begtime(0), m_atime(0), 
     m_rhost(host), m_port(port), m_broker(true), m_waitRsp(false)
 {
@@ -75,7 +75,7 @@ void TcpInvoker::release( void )
     m_begtime = 0;
 }
 
-int TcpInvoker::send( int cmdid, const string& msg )
+int TcpInvoker::send( int cmdid, const std::string& msg )
 {
     IOBuffItem obf;
     int msglen = msg.length();
@@ -100,7 +100,7 @@ int TcpInvoker::send( int cmdid, const string& msg )
 }
 
 // 同步接收tcp服务provider返回
-int TcpInvoker::recv( unsigned& rcmdid, string& msg )
+int TcpInvoker::recv( unsigned& rcmdid, std::string& msg )
 {
     static const int close_retcode = -2;
     int ret;
@@ -148,7 +148,7 @@ int TcpInvoker::recv( unsigned& rcmdid, string& msg )
     return ret;
 }
 
-string TcpInvoker::getKey( void ) const
+std::string TcpInvoker::getKey( void ) const
 {
     return m_rhost + ":" + _N(m_port);
 }

@@ -16,14 +16,11 @@ Modification :
 #include "comm/i_taskrun.h"
 #include "svr_item.h"
 
-using namespace std;
-
-
 class SvrConsumer : public ITaskRun2
 {
     struct SvrItem
     {
-        vector<svr_item_t> svrItms;
+        std::vector<svr_item_t> svrItms;
         int weightSum;
         int callcount;
         int timeout_sec; // 调用时的超时时间，由调用方指定
@@ -69,8 +66,8 @@ private:
     int _postSvrSearch( const string& regname ) const;
 
 private:
-    map<string, SvrItem*> m_allPrvds;
-    map<string, bool> m_emptyPrvds; // 存放失去全部连接的提供者名
+    std::map<string, SvrItem*> m_allPrvds;
+    std::map<string, bool> m_emptyPrvds; // 存放失去全部连接的提供者名
 
     int m_refresh_sec;
     int m_invoker_default_tosec;

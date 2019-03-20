@@ -13,8 +13,6 @@ Modification :
 #include "iohand.h"
 #include "synchand.h"
 
-using namespace std;
-
 using NotifyCBFunc = std::function<int(void*)>;
 
 class CloudApp: public IOHand
@@ -94,7 +92,7 @@ private:
 	string m_2ndName; // 启动后给web设置的别名
 
 	SyncHand m_syncHand;
-	map<string, NotifyCBFunc> m_ntfCB; // 未做多个相同事件消费
+	std::map<string, NotifyCBFunc> m_ntfCB; // 未做多个相同事件消费
 };
 
 #endif

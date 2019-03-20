@@ -3,9 +3,6 @@
 #include <list>
 #include <mutex>
 #include "redis.h"
-#include "comm/lock.h"
-
-using std::list;
 
 class RedisConnPool
 {
@@ -59,7 +56,7 @@ private:
 
 	bool m_inited;               // 是否已初始化
 	std::mutex m_lock;           //线程锁
-	list<Redis*> m_freeconn_list; //空闲连接
+	std::list<Redis*> m_freeconn_list; //空闲连接
 };
 
 #endif //

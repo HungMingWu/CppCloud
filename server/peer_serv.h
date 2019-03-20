@@ -11,10 +11,6 @@ Modification :
 #include "iohand.h"
 #include <string>
 
-using namespace std;
-
-
-
 class PeerServ: public IOHand
 {
 public:
@@ -23,7 +19,7 @@ public:
     virtual ~PeerServ(void);
 
 	static void Init( int mysvrid );
-	int init( const string& rhost, int port, int epfd );
+	int init( const std::string& rhost, int port, int epfd );
 	void setSvrid( int svrid );
 	int appendTimerq( void );
 	void reset( void );
@@ -50,7 +46,7 @@ protected:
 	int m_port;
 	bool m_inqueue;
 	bool m_existLink; // 是否已连接中
-	string m_rhost;
+	std::string m_rhost;
 };
 
 #endif

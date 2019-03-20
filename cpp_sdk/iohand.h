@@ -98,10 +98,10 @@ protected:
 	IOBuffItem* m_iBufItem;
 	IOBuffItem* m_oBufItem;
 	Queue<IOBuffItem*, true> m_oBuffq;
-	map<unsigned, cmdhandle_t> m_cmdidHandle;
+	std::map<unsigned, cmdhandle_t> m_cmdidHandle;
 
 public:
-	map<string, string> m_cliProp;
+	std::map<std::string, std::string> m_cliProp;
 
 };
 

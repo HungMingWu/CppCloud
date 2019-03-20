@@ -22,7 +22,7 @@ void OuterServ::init( int svrid )
  * @summery: 设置外围Serv的路由
  * @remark: rp参数格式: 1>4>6>8>
  **/
-int OuterServ::setRoutePath( const string& strpath )
+int OuterServ::setRoutePath( const std::string& strpath )
 {
     int ret = 0;
     RoutePath routpath;
@@ -50,7 +50,7 @@ int OuterServ::setRoutePath( const string& strpath )
         if (valid)
         {
             routpath.mtime = time(NULL);
-            string key = StrParse::Format("P%d_%s", pathn, strpath.c_str());
+            std::string key = StrParse::Format("P%d_%s", pathn, strpath.c_str());
             m_routpath[key] = routpath;           
         }
         else

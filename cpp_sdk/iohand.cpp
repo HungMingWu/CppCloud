@@ -12,8 +12,8 @@
 
 HEPCLASS_IMPL(IOHand, IOHand)
 
-static map<unsigned, ProcOneFunT> s_cmdid2interceptor; // 消息拦截器
-static map<unsigned, CMD_HAND_FUNC> s_cmdid2clsname; // 事件处理器，滞后于拦截器
+static std::map<unsigned, ProcOneFunT> s_cmdid2interceptor; // 消息拦截器
+static std::map<unsigned, CMD_HAND_FUNC> s_cmdid2clsname; // 事件处理器，滞后于拦截器
 static std::shared_mutex gCmdHandleLocker;
 
 datasize_t IOHand::serv_recv_bytes = 0;
@@ -378,7 +378,7 @@ void IOHand::setProperty( const string& key, const string& val )
 
 string IOHand::getProperty( const string& key ) const
 {
-	map<string, string>::const_iterator itr = m_cliProp.find(key);
+	auto itr = m_cliProp.find(key);
 	if (itr != m_cliProp.end())
 	{
 		return itr->second;
@@ -475,9 +475,8 @@ int IOHand::interceptorProcess( IOBuffItem*& iBufItem )
 {
 	int ret = 1; // 1 is continue
 	head_t* hdr = iBufItem->head();
-	map<unsigned, ProcOneFunT>::iterator it;
 
-	it = s_cmdid2interceptor.find(hdr->cmdid);
+	auto it = s_cmdid2interceptor.find(hdr->cmdid);
 	if (it != s_cmdid2interceptor.end())
 	{
 		ProcOneFunT func = it->second;
@@ -530,8 +529,7 @@ int IOHand::cmdProcess( IOBuffItem*& iBufItem )
 
 		head_t* hdr = iBufItem->head();
 		CMD_HAND_FUNC handle_func;
-		map<unsigned, CMD_HAND_FUNC>::iterator it;
-		it = s_cmdid2clsname.find(hdr->cmdid);
+		auto it = s_cmdid2clsname.find(hdr->cmdid);
 		WARNLOG_IF1BRK(s_cmdid2clsname.end() == it, -72, "CMDPROCESS| msg=an undefine cmdid recv| "
 			"cmdid=0x%X| mi=%s", hdr->cmdid, m_cliName.c_str());
 		handle_func = it->second;
@@ -556,7 +554,7 @@ int IOHand::selfCmdHandle( IOBuffItem*& iBufItem )
 
 	cmdhandle_t* cmdhand = NULL;
 	gCmdHandleLocker.lock_shared();
-	map<unsigned, cmdhandle_t>::iterator itr = m_cmdidHandle.find(hdr->cmdid | (hdr->seqid << 16));
+	auto itr = m_cmdidHandle.find(hdr->cmdid | (hdr->seqid << 16));
 
 	if (m_cmdidHandle.end() == itr)
 	{

@@ -24,7 +24,7 @@ ProviderMgr::ProviderMgr( void )
 
 ProviderMgr::~ProviderMgr( void )
 {
-	map<string, ServiceProvider*>::iterator itr =  m_providers.begin();
+	auto itr =  m_providers.begin();
 	for (; itr != m_providers.end(); ++itr)
 	{
 		ServiceProvider* second = itr->second;
@@ -43,7 +43,7 @@ void ProviderMgr::onCliCloseHandle( CliBase* cli )
 {
 	if (cli->getCliType() > 1)
 	{
-		map<string, ServiceProvider*>::iterator itr = m_providers.begin();
+		auto itr = m_providers.begin();
 		for (; itr != m_providers.end(); ++itr)
 		{
 			ServiceProvider* second = itr->second;
@@ -56,13 +56,13 @@ void ProviderMgr::onCliCloseHandle( CliBase* cli )
 	}
 }
 
-void ProviderMgr::notify2Invoker( const string& regname, int svrid, int prvdid )
+void ProviderMgr::notify2Invoker( const std::string& regname, int svrid, int prvdid )
 {
-	string preKey(SVRBOOKCH_ALIAS_PREFIX);
+	std::string preKey(SVRBOOKCH_ALIAS_PREFIX);
 	preKey += "_" + regname + "@";
 	CliMgr::AliasCursor finder(preKey);
 	CliBase *invokerCli = NULL;
-	string msg;
+	std::string msg;
 	while ((invokerCli = finder.pop()))
 	{
 		IOHand *invokerIO = dynamic_cast<IOHand *>(invokerCli);
@@ -111,7 +111,7 @@ int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 	int prvdid = 0;
 	Rjson::GetInt(prvdid, SVRREG_PROP_KEY, "prvdid", &doc);
 
-	string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, regname.c_str(), prvdid);
+	std::string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, regname.c_str(), prvdid);
 
 	int urlChange = CheckValidUrlProtocol(cli, &doc, regname2, seqid);
 	int enableBeforValue = cli->getIntProperty(regname2 + ":enable");
@@ -127,7 +127,7 @@ int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 	}
 
 	this->updateProvider(cli, regname, prvdid);
-	string resp = _F("{\"code\": 0, \"desc\": \"reg %s result %d\"}", regname2.c_str(), ret);
+	std::string resp = _F("{\"code\": 0, \"desc\": \"reg %s result %d\"}", regname2.c_str(), ret);
 	iohand->sendData(CMD_SVRREGISTER_RSP, seqid, resp.c_str(), resp.length(), true);
 
 	// 系统日志记录 (添加Prvd)
@@ -140,7 +140,7 @@ int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 	return ret;
 }
 
-void ProviderMgr::updateProvider( CliBase* cli,  const string& regname, int prvdid)
+void ProviderMgr::updateProvider( CliBase* cli,  const std::string& regname, int prvdid)
 {
 	ServiceProvider* provider = m_providers[regname];
 	if (NULL == provider)
@@ -153,10 +153,10 @@ void ProviderMgr::updateProvider( CliBase* cli,  const string& regname, int prvd
 }
 
 // url&protocol合法性检查
-int ProviderMgr::CheckValidUrlProtocol( CliBase* cli, const void* doc, const string& regname2, unsigned seqid ) 
+int ProviderMgr::CheckValidUrlProtocol( CliBase* cli, const void* doc, const std::string& regname2, unsigned seqid )
 {
-	string url1;
-	string url0 = cli->getProperty(regname2 + ":url");
+	std::string url1;
+	std::string url0 = cli->getProperty(regname2 + ":url");
 	int protocol1 = 0;
 	int ret = 0;
 	
@@ -179,7 +179,7 @@ int ProviderMgr::CheckValidUrlProtocol( CliBase* cli, const void* doc, const str
 	if (!url1.empty() && 0 != protocol1)
 	{
 		static const int protocolLen = 4;
-		static const string urlPrefix[protocolLen+1] = {"tcp", "udp", "http", "https", "x"};
+		static const std::string urlPrefix[protocolLen+1] = {"tcp", "udp", "http", "https", "x"};
 		NormalExceptionOn_IFTRUE(protocol1 > protocolLen || protocol1 <= 0, 400, 
 				CMD_SVRREGISTER_RSP, seqid, _F("invalid protocol %d", protocol1));
 	 	NormalExceptionOn_IFTRUE(0 != url1.find(urlPrefix[protocol1-1]), 400, 
@@ -189,7 +189,7 @@ int ProviderMgr::CheckValidUrlProtocol( CliBase* cli, const void* doc, const str
 	return ret;
 }
 
-int ProviderMgr::setProviderProperty( CliBase* cli, const void* doc, const string& regname2 )
+int ProviderMgr::setProviderProperty( CliBase* cli, const void* doc, const std::string& regname2 )
 {
 	int ret = -1;
 	const Value* svrprop = NULL;
@@ -206,7 +206,7 @@ int ProviderMgr::setProviderProperty( CliBase* cli, const void* doc, const strin
 			}
 			else if (itr->value.IsInt())
 			{
-				string val = StrParse::Itoa(itr->value.GetInt());
+				std::string val = StrParse::Itoa(itr->value.GetInt());
 				cli->setProperty(regname2 + ":" + key, val);
 			}
 			else if (itr->value.IsBool()) // true -> "1", false -> "0"
@@ -239,7 +239,7 @@ int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 		rack = iohand->getIntProperty("rack");
 	}
 
-	string resp("{\"data\": ");
+	std::string resp("{\"data\": ");
 	int ret = this->getOneProviderJson(resp, regname, idc, rack, version, limit);
 	resp.append(",");
 	StrParse::PutOneJson(resp, "count", ret, true);
@@ -249,7 +249,7 @@ int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 
 	if (bookchange) // 订阅改变事件（cli下线）
 	{
-		string alias = string(SVRBOOKCH_ALIAS_PREFIX) + "_" + regname + "@" + iohand->getProperty(CONNTERID_KEY);
+		std::string alias = std::string(SVRBOOKCH_ALIAS_PREFIX) + "_" + regname + "@" + iohand->getProperty(CONNTERID_KEY);
 		CliMgr::Instance()->addAlias2Child(alias, iohand);
 	}
 
@@ -265,7 +265,7 @@ int ProviderMgr::OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param )
 
 	bool ball = (regname.empty() || "all" == regname);
 	int count = 0;
-	string resp("{");
+	std::string resp("{");
 
 	resp.append("\"data\":");
 	count = ball? this->getAllJson(resp) : this->getOneProviderJson(resp, regname);
@@ -321,7 +321,7 @@ int ProviderMgr::OnCMD_SVRSTAT_REQ( void* ptr, unsigned cmdid, void* param )
 		if (ivk_ok || ivk_ng) // 设置自身作为消费者时自身调用服务的统计信息
 		{
 			// 注意：这里的prvdid非自身（iohand）的，而是被调者的
-			string regname2 = _F("%s%s%%%d-%d", SVRPROP_PREFIX, regname.c_str(), svrid, 0);
+			std::string regname2 = _F("%s%s%%%d-%d", SVRPROP_PREFIX, regname.c_str(), svrid, 0);
 			if (ivk_ok) iohand->setProperty(regname2 + ":ivk_ok", ivk_ok);
 			if (ivk_ng) iohand->setProperty(regname2 + ":ivk_ng", ivk_ng);
 		}
@@ -331,10 +331,10 @@ int ProviderMgr::OnCMD_SVRSTAT_REQ( void* ptr, unsigned cmdid, void* param )
 }
 
 
-ServiceProvider* ProviderMgr::getProviderPtr( const string& regname ) const
+ServiceProvider* ProviderMgr::getProviderPtr( const std::string& regname ) const
 {
 	ServiceProvider* ret = NULL;
-	map<string, ServiceProvider*>::const_iterator itr = m_providers.find(regname);
+	auto itr = m_providers.find(regname);
 	if (itr != m_providers.end())
 	{
 		ret = itr->second;
@@ -343,7 +343,7 @@ ServiceProvider* ProviderMgr::getProviderPtr( const string& regname ) const
 	return ret;
 }
 
-bool ProviderMgr::hasProviderItem( CliBase* cli, const string& regname, int prvdid ) const
+bool ProviderMgr::hasProviderItem( CliBase* cli, const std::string& regname, int prvdid ) const
 {
 	bool ret = false;
 	ServiceProvider* prvd = getProviderPtr(regname);
@@ -356,11 +356,11 @@ bool ProviderMgr::hasProviderItem( CliBase* cli, const string& regname, int prvd
 }
 
 // return provider个数
-int ProviderMgr::getAllJson( string& strjson ) const
+int ProviderMgr::getAllJson( std::string& strjson ) const
 {
 	int count = 0;
 	strjson.append("{");
-	map<string, ServiceProvider*>::const_iterator itr = m_providers.begin();
+	auto itr = m_providers.begin();
 	for (; itr != m_providers.end(); ++itr)
 	{
 		if (count > 0) strjson.append(",");
@@ -373,11 +373,11 @@ int ProviderMgr::getAllJson( string& strjson ) const
 }
 
 // return item个数
-int ProviderMgr::getOneProviderJson( string& strjson, const string& regname ) const
+int ProviderMgr::getOneProviderJson( std::string& strjson, const std::string& regname ) const
 {
 	int count = 0;
 	strjson.append("{");
-	map<string, ServiceProvider*>::const_iterator itr = m_providers.find(regname);
+	auto itr = m_providers.find(regname);
 	if (itr != m_providers.end())
 	{
 		strjson.append(_F("\"%s\":", itr->first.c_str()));
@@ -388,10 +388,10 @@ int ProviderMgr::getOneProviderJson( string& strjson, const string& regname ) co
 	return count;
 }
 // return item个数
-int ProviderMgr::getOneProviderJson( string& strjson, const string& regname, short idc, short rack, short version, short limit ) const
+int ProviderMgr::getOneProviderJson( std::string& strjson, const std::string& regname, short idc, short rack, short version, short limit ) const
 {
 	int count = 0;
-	map<string, ServiceProvider*>::const_iterator itr = m_providers.find(regname);
+	auto itr = m_providers.find(regname);
 	if (itr != m_providers.end() && limit > 0)
 	{
 		count = itr->second->query(strjson, idc, rack, version, limit);

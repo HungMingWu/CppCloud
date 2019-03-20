@@ -10,7 +10,7 @@
 
 void SvrConsumer::SvrItem::rmBySvrid( int svrid, int prvdid )
 {
-    vector<svr_item_t>::iterator it = svrItms.begin();
+    auto it = svrItms.begin();
     for (; it != svrItms.end(); )
     {
         if (svrid == it->svrid)
@@ -39,7 +39,7 @@ svr_item_t* SvrConsumer::SvrItem::randItem( void )
     
     int nrd = rand()%weightSum;
     int tmpsum = 0;
-    vector<svr_item_t>::iterator it0 = svrItms.begin();
+    auto it0 = svrItms.begin();
     for (; it0 != svrItms.end(); ++it0)
     {
         svr_item_t* pitm = &(*it0);
@@ -97,7 +97,7 @@ int SvrConsumer::onCMD_EVNOTIFY_REQ( void* ptr )
         "EVNOTIFY| msg=%s", Rjson::ToString(doc).c_str());
     
     std::unique_lock lock(m_rwLock);
-    map<string, SvrItem*>::iterator it = m_allPrvds.find(regname);
+    auto it = m_allPrvds.find(regname);
     if (it != m_allPrvds.end())
     {
         it->second->rmBySvrid(svrid, prvdid);
@@ -117,16 +117,16 @@ int SvrConsumer::init( const string& svrList )
     static const char seperator = ' ';
     static const char seperator2 = ':';
     //static const int timeout_sec = 3;
-    vector<string> vSvrName;
+    std::vector<std::string> vSvrName;
 
     int ret = StrParse::SpliteStr(vSvrName, svrList, seperator);
     ERRLOG_IF1RET_N(ret, -110, "CONSUMERINIT| msg=splite to vector fail %d| svrList=%s", 
         ret, svrList.c_str());
 
-    vector<string>::const_iterator cit = vSvrName.begin();
+    auto cit = vSvrName.begin();
     for (; cit != vSvrName.end(); ++cit)
     {
-        vector<string> vSvrNver;
+        std::vector<std::string> vSvrNver;
         StrParse::SpliteStr(vSvrNver, *cit, seperator2);
 
         const string& svrname = vSvrNver[0];
@@ -251,7 +251,7 @@ int SvrConsumer::parseResponse( const void* ptr )
 void SvrConsumer::uninit( void )
 {
     std::unique_lock lock(m_rwLock);
-    map<string, SvrItem*>::iterator it = m_allPrvds.begin();
+    auto it = m_allPrvds.begin();
     for (; it != m_allPrvds.end(); ++it)
     {
         delete it->second;
@@ -302,7 +302,7 @@ int SvrConsumer::getInvokeTimeoutSec( const string& regname )
 int SvrConsumer::getSvrPrvd( svr_item_t& pvd, const string& svrname )
 {
     std::shared_lock lock(m_rwLock);
-    map<string, SvrItem*>::iterator it = m_allPrvds.find(svrname);
+    auto it = m_allPrvds.find(svrname);
     IFRETURN_N(it == m_allPrvds.end(), -1);
     svr_item_t* itm = it->second->randItem();
     int ret = -114;

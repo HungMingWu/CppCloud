@@ -481,7 +481,7 @@ int TcpAioInvoker::request( string& resp, int cmdid, const string& reqmsg )
 {
 	static const int sec2us = 1000000;
 	int seqid = ++m_seqid;
-	shared_ptr< Queue<string, false> > shareQueue = make_shared< Queue<string, false> >();
+	auto shareQueue = std::make_shared< Queue<string, false> >();
 	{
 		std::unique_lock lock(m_qLock);
 		m_reqQueue[seqid] = shareQueue;

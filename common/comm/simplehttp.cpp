@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include "simplehttp.h"
 
-using namespace std;
 const int INVALID_SOCKFD = -1;
 /*#define SIMPLEHTTP_INIT_MEMBER {m_port = 0; m_parsed = false; m_jsonMime=true, m_timeout_ms = 0;\
      m_sockfd = INVALID_SOCKFD; m_connect_count = 0;m_req_count = 0;}
@@ -80,16 +79,16 @@ void CSimpleHttp::setObject( const std::string &object )
     m_errmsg.clear();
 }
 
-int CSimpleHttp::parseUrl( const string& url )
+int CSimpleHttp::parseUrl( const std::string& url )
 {
     if (url.find("http://") != 0)
     {
         return E_HTTP_UNKNOWN_PROTOCOL;
     }
 
-    string::size_type pos = url.find('/', 7);
-    string host;
-    if (pos == string::npos)
+    std::string::size_type pos = url.find('/', 7);
+    std::string host;
+    if (pos == std::string::npos)
     {
         host = url.substr(7);
         m_object = "/";
@@ -106,8 +105,8 @@ int CSimpleHttp::parseUrl( const string& url )
     }
 
     int port = 80;
-    string::size_type colon = host.find(':');
-    if (colon != string::npos)
+    std::string::size_type colon = host.find(':');
+    if (colon != std::string::npos)
     {
         port = atoi(host.substr(colon + 1).c_str());
         host = host.substr(0, colon);
@@ -236,7 +235,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
         m_object = "/";
     }
 
-    ostringstream oss;
+    std::ostringstream oss;
     oss << (usePost ? "POST " : "GET ") << m_object << " HTTP/1.1\r\n";
     // add head: user-agent
     oss << "User-Agent: Mozilla/4.0\r\n";
@@ -260,7 +259,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
     if(_true){m_errmsg += errmsg; close(m_sockfd); m_sockfd=INVALID_SOCKFD; return retn; }
 
     oss << "\r\nCache-Control: no-cache\r\n\r\n";
-    string header = oss.str();
+    std::string header = oss.str();
     const char *pData = header.data();
     size_t size = header.size();
 
@@ -297,10 +296,10 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
     static const int httpHeadLengthMin = 160; // 最小http-head
     static const unsigned ms2us = 1000;
     char recvBuf[512];
-    string::size_type headEnd;
+    std::string::size_type headEnd;
     size_t recv_len = 0;
-    string respHeader;
-    for (int i = 0; (headEnd = respHeader.find("\r\n\r\n")) == string::npos; ++i)
+    std::string respHeader;
+    for (int i = 0; (headEnd = respHeader.find("\r\n\r\n")) == std::string::npos; ++i)
     {
         if (0 == i)
         {
@@ -327,12 +326,12 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
     headEnd += 4;
 
     int contentLength = -1;
-    string::size_type clBegin = respHeader.find("Content-Length:");
-    if (clBegin != string::npos && clBegin < headEnd)
+    std::string::size_type clBegin = respHeader.find("Content-Length:");
+    if (clBegin != std::string::npos && clBegin < headEnd)
     {
         clBegin += 15;
-        string::size_type clEnd = respHeader.find("\r\n", clBegin);
-        if (clEnd != string::npos)
+        std::string::size_type clEnd = respHeader.find("\r\n", clBegin);
+        if (clEnd != std::string::npos)
         {
             contentLength = atoi(respHeader.substr(clBegin, clEnd - clBegin).c_str());
             if (contentLength > (int)maxConLen)
@@ -344,10 +343,10 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
 
     bool close_connect = false;
     clBegin = respHeader.find("Connection:");
-    if (clBegin != string::npos && clBegin < headEnd)
+    if (clBegin != std::string::npos && clBegin < headEnd)
     {
-        close_connect = ( string::npos != respHeader.find("close", clBegin+10) ||
-                          string::npos != respHeader.find("Close", clBegin+10) );
+        close_connect = ( std::string::npos != respHeader.find("close", clBegin+10) ||
+                          std::string::npos != respHeader.find("Close", clBegin+10) );
     }
 
     m_response.clear();
@@ -380,7 +379,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
     else if (contentLength < 0) // 如果响应中没有Content-Length的情况
     {
         static const char chunkedcoding[] = "Transfer-Encoding";
-        string::size_type tranfer;
+        std::string::size_type tranfer;
 
         if (respHeader.size() > headEnd) // 把头中接收多余部分移动m_response
         {
@@ -388,25 +387,25 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
         }
 
         tranfer = respHeader.find(chunkedcoding);
-        if (string::npos != tranfer &&
-            string::npos != respHeader.find("chunked", sizeof(chunkedcoding)))
+        if (std::string::npos != tranfer &&
+            std::string::npos != respHeader.find("chunked", sizeof(chunkedcoding)))
         {
             // 可变分块包体
             unsigned long chunksize = 0;
             const size_t crlf_len = 2;
-            string::size_type chunkbeg = 0;
-            string::size_type chunksep;
-            string strsize;
+            std::string::size_type chunkbeg = 0;
+            std::string::size_type chunksep;
+            std::string strsize;
 
             do
             {
                 chunksep = m_response.find("\r\n", chunkbeg);
-                while ( chunksep == string::npos )
+                while ( chunksep == std::string::npos )
                 {
                     ERR_RETURN(m_response.size()-chunkbeg > 10, "chunksize invalid", E_HTTP_OTHER_ERROR);
 
                     ret = recv(m_sockfd, recvBuf, sizeof(recvBuf), 0);
-                    ERR_RETURN(ret<=0, string("recv not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
+                    ERR_RETURN(ret<=0, std::string("recv not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
 
                     m_response.append(recvBuf, ret);
                     recv_len += ret;
@@ -415,7 +414,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
                     chunksep = m_response.find("\r\n", chunkbeg);
                 }
 
-                string strsize(m_response, chunkbeg, chunksep-chunkbeg);
+		std::string strsize(m_response, chunkbeg, chunksep-chunkbeg);
                 chunksize = strtoul(strsize.c_str(), NULL, 16);
                 ERR_RETURN(chunksize>(long)maxConLen, "chunksize too big:"+strsize, E_HTTP_RSP_TOOBIG);
 
@@ -429,7 +428,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
                 while (m_response.size() - chunkbeg < chunksize) // 实际数据部分
                 {
                     ret = recv(m_sockfd, recvBuf, sizeof(recvBuf), 0);
-                    ERR_RETURN(ret<=0, string("recv chunk not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
+                    ERR_RETURN(ret<=0, std::string("recv chunk not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
 
                     m_response.append(recvBuf, ret);
                     recv_len += ret;
@@ -441,7 +440,7 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
                 while (m_response.size() - chunkbeg < crlf_len) // 尾部的\r\n 
                 {
                     ret = recv(m_sockfd, recvBuf, sizeof(recvBuf), 0);
-                    ERR_RETURN(ret<=0, string("recv chunk not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
+                    ERR_RETURN(ret<=0, std::string("recv chunk not finish:")+strerror(errno), E_HTTP_RECV_BODY_FAIL);
 
                     m_response.append(recvBuf, ret);
                     recv_len += ret;
@@ -477,12 +476,12 @@ int CSimpleHttp::request(bool usePost, const std::string &data)
     }
 
     respHeader.erase(headEnd);
-    string::size_type httpCodeBegin = respHeader.find(' ');
-    if (httpCodeBegin != string::npos)
+    std::string::size_type httpCodeBegin = respHeader.find(' ');
+    if (httpCodeBegin != std::string::npos)
     {
         ++httpCodeBegin;
-        string::size_type httpCodeEnd = respHeader.find(' ', httpCodeBegin);
-        if (httpCodeEnd != string::npos)
+        std::string::size_type httpCodeEnd = respHeader.find(' ', httpCodeBegin);
+        if (httpCodeEnd != std::string::npos)
         {
             m_httpStatus = respHeader.substr(httpCodeBegin, httpCodeEnd - httpCodeBegin);
         }
@@ -514,7 +513,7 @@ int CSimpleHttp::doPost(const std::string &data) {
 int CSimpleHttp::doPostFile( const std::string& filename )
 {
     int ret = -1;
-    string data;
+    std::string data;
     FILE* file = fopen(filename.c_str(), "rb");
     if (file)
     {

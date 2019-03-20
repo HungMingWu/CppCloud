@@ -12,7 +12,6 @@ Modification :
 #include "comm/public.h"
 #include <map>
 
-using namespace std;
 class PeerServ;
 
 
@@ -33,7 +32,7 @@ public:
 private:
 	int m_mysvrid;
 	int m_epfd;
-	map<PeerServ*, int> m_rSvrs; // 此为主, CliMgr次
+	std::map<PeerServ*, int> m_rSvrs; // 此为主, CliMgr次
 };
 
 #endif

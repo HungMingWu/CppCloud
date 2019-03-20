@@ -13,7 +13,6 @@ Modification :
 #include "comm/public.h"
 #include "service_provider.h"
 
-using namespace std;
 class CliBase;
 
 class ProviderMgr
@@ -31,24 +30,24 @@ public:
 
 	static void OnCliCloseHandle( CliBase* cli );
 	void onCliCloseHandle( CliBase* cli );
-	void updateProvider( CliBase* cli,  const string& regname, int prvdid );
+	void updateProvider( CliBase* cli,  const std::string& regname, int prvdid );
 
 private:
-	ServiceProvider* getProviderPtr( const string& regname ) const;
-	bool hasProviderItem( CliBase* cli, const string& regname, int prvdid ) const;
+	ServiceProvider* getProviderPtr( const std::string& regname ) const;
+	bool hasProviderItem( CliBase* cli, const std::string& regname, int prvdid ) const;
 
-	int getAllJson( string& strjson ) const;
-	int getOneProviderJson( string& strjson, const string& regname ) const;
-	int getOneProviderJson( string& strjson, const string& regname, short idc, short rack, short version, short limit ) const;
+	int getAllJson( std::string& strjson ) const;
+	int getOneProviderJson( std::string& strjson, const std::string& regname ) const;
+	int getOneProviderJson( std::string& strjson, const std::string& regname, short idc, short rack, short version, short limit ) const;
 
 	// 服务提供者退出或禁用，通知各订阅过服务的消费者
-	void notify2Invoker( const string& regname, int svrid, int prvdid );
+	void notify2Invoker( const std::string& regname, int svrid, int prvdid );
 	// 注册或设备服务提供者的属性
-	int setProviderProperty( CliBase* cli, const void* doc, const string& regname );
-	static int CheckValidUrlProtocol( CliBase* cli, const void* doc, const string& regname2, unsigned seqid ) ;
+	int setProviderProperty( CliBase* cli, const void* doc, const std::string& regname );
+	static int CheckValidUrlProtocol( CliBase* cli, const void* doc, const std::string& regname2, unsigned seqid ) ;
 
 private:
-	map<string, ServiceProvider*> m_providers;
+	std::map<std::string, ServiceProvider*> m_providers;
 	int m_seqid;
 };
 

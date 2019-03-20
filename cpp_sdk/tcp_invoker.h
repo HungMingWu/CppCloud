@@ -10,27 +10,22 @@ Modification :
 #define _TCP_INVOKER_H_
 #include <string>
 
-
-using namespace std;
-
-
-
 class TcpInvoker
 {
 public:
-	TcpInvoker( const string& hostport );
-	TcpInvoker( const string& host, int port );
+	TcpInvoker( const std::string& hostport );
+	TcpInvoker( const std::string& host, int port );
 	~TcpInvoker( void );
 
 	int init( int rcvto_sec );
 	int connect( bool force );
 	bool check( int flowFlag = -1 ) const;
 	void release( void );
-	string getKey( void ) const;
+	std::string getKey( void ) const;
 	time_t getAtime( void ) const;
 
-	int send( int cmdid, const string& msg );
-	int recv( unsigned& rcmdid, string& msg );
+	int send( int cmdid, const std::string& msg );
+	int recv( unsigned& rcmdid, std::string& msg );
 
 protected:
 
@@ -41,7 +36,7 @@ private:
 	int m_timeout_sec;
 	time_t m_begtime;
 	time_t m_atime;
-	string m_rhost;
+	std::string m_rhost;
 	int m_port;
 	bool m_broker;
 	bool m_waitRsp;

@@ -20,14 +20,14 @@ void SHttpInvokerMgr::setLimitCount( int n )
      m_eachLimitCount = n;
 }
 
-string SHttpInvokerMgr::adjustUrlPath( const string& url, const string& path ) const
+std::string SHttpInvokerMgr::adjustUrlPath( const std::string& url, const std::string& path ) const
 {
     if (path.empty()) return url;
     if (url.empty()) return path;
     char ch1 = *url.rbegin();
     char ch2 = *path.begin();
 
-    string ret;
+    std::string ret;
     if ('/' == ch1)
     {
         ret = url + (('/'==ch2)? path.substr(1) : path);
@@ -42,7 +42,7 @@ string SHttpInvokerMgr::adjustUrlPath( const string& url, const string& path ) c
 
 // example: http://ip:port/method/pa?param1=v1&param2=v2
 // param: path="/pa"; qstr="param1=v1&param2=v2"
-int SHttpInvokerMgr::get( string& resp, const string& path, const string& qstr, const string& svrname )
+int SHttpInvokerMgr::get( std::string& resp, const std::string& path, const std::string& qstr, const std::string& svrname )
 {
     int ret;
     svr_item_t pvd;
@@ -52,7 +52,7 @@ int SHttpInvokerMgr::get( string& resp, const string& path, const string& qstr, 
 
     do
     {
-        string hostp = _F("%s:%p", pvd.host.c_str(), pvd.port);
+        std::string hostp = _F("%s:%p", pvd.host.c_str(), pvd.port);
         CSimpleHttp http(adjustUrlPath(pvd.url, path) + "?" + qstr);
         http.setTimeout(m_invokerTimOut_sec*1000);
         ret = http.doGet();
@@ -60,7 +60,7 @@ int SHttpInvokerMgr::get( string& resp, const string& path, const string& qstr, 
                 ret, http.getErrMsg().c_str(), svrname.c_str());
 
         resp = http.getResponse();
-        string status = http.getHttpStatus();
+        std::string status = http.getHttpStatus();
         ret = (status == "200" ? 0: -116);
         ERRLOG_IF1(ret, "GETPROVIDER| msg=http status is %s| svrname=%s| err=%s", 
                 status.c_str(), svrname.c_str(), http.getErrMsg().c_str());        
@@ -72,7 +72,7 @@ int SHttpInvokerMgr::get( string& resp, const string& path, const string& qstr, 
 }
 
 
-int SHttpInvokerMgr::post( string& resp, const string& path, const string& reqbody, const string& svrname )
+int SHttpInvokerMgr::post( std::string& resp, const std::string& path, const std::string& reqbody, const std::string& svrname )
 {
     int ret;
     svr_item_t pvd;
@@ -82,14 +82,14 @@ int SHttpInvokerMgr::post( string& resp, const string& path, const string& reqbo
 
     do
     {
-        string hostp = _F("%s:%p", pvd.host.c_str(), pvd.port);
+        std::string hostp = _F("%s:%p", pvd.host.c_str(), pvd.port);
         CSimpleHttp http(adjustUrlPath(pvd.url, path));
         http.setTimeout(m_invokerTimOut_sec*1000);
         ret = http.doPost(reqbody);
         ERRLOG_IF1BRK(ret, ret, "GETPROVIDER| msg=http.doPost fail %d| svrname=%s", ret, svrname.c_str());
 
         resp = http.getResponse();
-        string status = http.getHttpStatus();
+        std::string status = http.getHttpStatus();
         ret = (status == "200" ? 0: -116);
         ERRLOG_IF1(ret, "GETPROVIDER| msg=http status is %s| svrname=%s| err=%s", 
                 status.c_str(), svrname.c_str(), http.getErrMsg().c_str());        

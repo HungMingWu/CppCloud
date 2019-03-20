@@ -9,10 +9,8 @@
 #define _REDISPOOLADMIN_H_
 #include <map>
 #include <mutex>
-#include "comm/lock.h"
 #include "redis.h"
 
-using namespace std;
 class RedisConnPool;
 
 
@@ -110,8 +108,8 @@ protected: // 单实例对象
 
 private:
     std::mutex m_lock;
-	map<string, RedisConnPool*> m_conn_pools;
-    map<string, redis_pool_conf_t*> m_all_conf; // 非启动时初始化的池
+    std::map<std::string, RedisConnPool*> m_conn_pools;
+    std::map<std::string, redis_pool_conf_t*> m_all_conf; // 非启动时初始化的池
 	
 };
 

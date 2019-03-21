@@ -7,12 +7,12 @@
 
 const char g_jsonconf_file[] = ".scomm_svrid.txt";
 
-CliMgr::AliasCursor::AliasCursor( const string& key_beg ): 
+CliMgr::AliasCursor::AliasCursor( const std::string& key_beg ):
 	iter_range(CliMgr::Instance()->m_aliName2Child, key_beg, key_beg+"~")
 {
 }
 
-CliMgr::AliasCursor::AliasCursor( const string& key_beg, const string& key_end ): 
+CliMgr::AliasCursor::AliasCursor( const std::string& key_beg, const std::string& key_end ):
 	iter_range(CliMgr::Instance()->m_aliName2Child, key_beg, key_end)
 {
 }
@@ -55,7 +55,7 @@ int CliMgr::addChild( CliBase* child, bool inCtrl )
 	return 0;
 }
 
-int CliMgr::addAlias2Child( const string& asname, CliBase* ptr )
+int CliMgr::addAlias2Child( const std::string& asname, CliBase* ptr )
 {
 	int ret = 0;
 
@@ -86,9 +86,9 @@ int CliMgr::addAlias2Child( const string& asname, CliBase* ptr )
 	return ret;
 }
 
-void CliMgr::removeAliasChild( const string& asname )
+void CliMgr::removeAliasChild( const std::string& asname )
 {
-	map<string, CliBase*>::iterator it = m_aliName2Child.find(asname);
+	auto it = m_aliName2Child.find(asname);
 	if (m_aliName2Child.end() != it)
 	{
 		map<CliBase*, CliInfo>::iterator itr = m_children.find(it->second);
@@ -106,9 +106,9 @@ void CliMgr::removeAliasChild( CliBase* ptr, bool rmAll )
 	map<CliBase*, CliInfo>::iterator it = m_children.find(ptr);
 	if (it != m_children.end()) // 移除所有别名引用
 	{
-		string asnamestr;
+		std::string asnamestr;
 		CliInfo& cliinfo = it->second;
-		for (map<string, bool>::iterator itr = cliinfo.aliasName.begin(); itr != cliinfo.aliasName.end(); ++itr)
+		for (auto itr = cliinfo.aliasName.begin(); itr != cliinfo.aliasName.end(); ++itr)
 		{
 			asnamestr.append( asnamestr.empty()?"":"&" ).append(itr->first);
 			m_aliName2Child.erase(itr->first);
@@ -147,7 +147,7 @@ CliBase* CliMgr::getChildBySvrid( int svrid )
 {
 	static const char* svr_subfix[] = {"_C", "_S", "_I", "_s", "_i", NULL};
 	CliBase* ret = NULL;
-	string strsvrid = StrParse::Itoa(svrid);
+	std::string strsvrid = std::to_string(svrid);
 
 	for (int i = 0; NULL != svr_subfix[i] && NULL == ret; ++i)
 	{
@@ -157,10 +157,10 @@ CliBase* CliMgr::getChildBySvrid( int svrid )
 	return ret;
 }
 
-CliBase* CliMgr::getChildByName( const string& asname )
+CliBase* CliMgr::getChildByName( const std::string& asname )
 {
 	CliBase* ptr = NULL;
-	map<string,CliBase*>::iterator it = m_aliName2Child.find(asname) ;
+	auto it = m_aliName2Child.find(asname) ;
 	if (it != m_aliName2Child.end())
 	{
 		ptr = it->second;
@@ -177,9 +177,9 @@ CliInfo* CliMgr::getCliInfo( CliBase* child )
 /**
  * era格式: svrid:erano:atime = 10:2:15412341234 
  */
-string CliMgr::getLocalClisEraString( void )
+std::string CliMgr::getLocalClisEraString( void )
 {
-	string ret;
+	std::string ret;
 	map<CliBase*, CliInfo>::iterator it = m_children.begin();
 	for (; it != m_children.end(); ++it)
 	{
@@ -195,22 +195,22 @@ string CliMgr::getLocalClisEraString( void )
 }
 
 
-int CliMgr::getLocalCliJsonByDiffera( string& jstr, const string& differa )
+int CliMgr::getLocalCliJsonByDiffera( std::string& jstr, const std::string& differa )
 {
 	int ret = 0;
 	int i = 0;
 
 	jstr += "[";
 	
-	vector<string> vecitem;
+	vector<std::string> vecitem;
 	StrParse::SpliteStr(vecitem, differa, ' ');
-	for (vector<string>::iterator itim = vecitem.begin(); itim != vecitem.end(); ++itim)
+	for (auto itim = vecitem.begin(); itim != vecitem.end(); ++itim)
 	{
-		vector<string> vecsvr;
+		vector<std::string> vecsvr;
 		StrParse::SpliteStr(vecsvr, *itim, ':');
 		if (3 == vecsvr.size())
 		{
-			string& svrid = vecsvr[0];
+			std::string& svrid = vecsvr[0];
 			//int svrera = atoi(vecsvr[1].c_str());
 			//int svratime = atoi(vecsvr[2].c_str());
 
@@ -234,7 +234,7 @@ int CliMgr::getLocalCliJsonByDiffera( string& jstr, const string& differa )
 	return ret;	
 }
 
-int CliMgr::getLocalAllCliJson( string& jstr )
+int CliMgr::getLocalAllCliJson( std::string& jstr )
 {
 	int ret = 0;
 
@@ -267,7 +267,7 @@ void CliMgr::updateCliTime( CliBase* child )
 {
 	CliInfo* clif = getCliInfo(child);
 	ERRLOG_IF1RET(NULL==clif, "UPDATECLITIM| msg=null pointer at %p", child);
-	string uniqstr = child->isLocal()? child->getProperty("fd"): StrParse::Format("%p",child);
+	std::string uniqstr = child->isLocal()? child->getProperty("fd"): StrParse::Format("%p",child);
 	time_t now = time(NULL);
 
 	if (uniqstr.empty()) return;
@@ -275,25 +275,25 @@ void CliMgr::updateCliTime( CliBase* child )
 
 	if (clif->t1 >= clif->t0)
 	{
-		string atimkey = StrParse::Format("%s%ld@", CLI_PREFIX_KEY_TIMEOUT, clif->t1);
+		std::string atimkey = StrParse::Format("%s%ld@", CLI_PREFIX_KEY_TIMEOUT, clif->t1);
 		atimkey += uniqstr;
 		removeAliasChild(atimkey);
 	}
 
 	clif->t1 = now;
 	child->setIntProperty("atime", now);
-	string atimkey = StrParse::Format("%s%ld@", CLI_PREFIX_KEY_TIMEOUT, clif->t1);
+	std::string atimkey = StrParse::Format("%s%ld@", CLI_PREFIX_KEY_TIMEOUT, clif->t1);
 	atimkey += uniqstr;
 	int ret = addAlias2Child(atimkey, child);
 	ERRLOG_IF1(ret, "UPDATECLITIM| msg=add alias atimkey fail| ret=%d| mi=%s", ret, child->m_idProfile.c_str());
 }
 
-void CliMgr::setProperty( CliBase* dst, const string& key, const string& val )
+void CliMgr::setProperty( CliBase* dst, const std::string& key, const std::string& val )
 {
 	dst->m_cliProp[key] = val;
 }
 
-string CliMgr::getProperty( CliBase* dst, const string& key )
+std::string CliMgr::getProperty( CliBase* dst, const std::string& key )
 {
 	return dst->getProperty(key);
 }
@@ -314,7 +314,7 @@ int CliMgr::onChildEvent( int evtype, va_list ap )
 		Actmgr::Instance()->appCloseFound(son, clitype, cliinfo);
 
 		// 广播通知其他Serv某一cli下线
-		string broadcast_msg = _F("{\"%s\":[%d]}", UPDATE_CLIPROP_DOWNKEY, son->getIntProperty(CONNTERID_KEY));
+		std::string broadcast_msg = _F("{\"%s\":[%d]}", UPDATE_CLIPROP_DOWNKEY, son->getIntProperty(CONNTERID_KEY));
 		removeAliasChild(son, true);
 		son = NULL;
 		BroadCastCli::Instance()->toWorld(broadcast_msg, CMD_UPDATEERA_REQ, 0, false);
@@ -358,13 +358,13 @@ int CliMgr::progExitHanele( int flg )
 	return 0;
 }
 
-string CliMgr::selfStat( bool incAliasDetail )
+std::string CliMgr::selfStat( bool incAliasDetail )
 {
-	string adetail;
+	std::string adetail;
 
 	if (incAliasDetail)
 	{
-		map<string, CliBase*>::const_iterator it = m_aliName2Child.begin();
+		auto it = m_aliName2Child.begin();
 		for (; it != m_aliName2Child.end(); ++it)
 		{
 			adetail += it->first;

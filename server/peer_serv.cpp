@@ -113,7 +113,7 @@ int PeerServ::taskRun( int flag, long p2 )
 {
 	// 向远端serv发起连接
 	// 先检查是否已有同一ID的远端serv,有则无需发起
-	std::string rsvrid = StrParse::Itoa(m_svrid);
+	std::string rsvrid = std::to_string(m_svrid);
 	std::string alias_beg = std::string(SERV_IN_ALIAS_PREFIX) + rsvrid + "A"; // "A"是排除serv11进入serv1的范围
 	std::string alias_end = std::string(SERV_IN_ALIAS_PREFIX) + rsvrid + "z"; // serv1C serv1S
 	int ret = 0;

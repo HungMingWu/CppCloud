@@ -40,10 +40,8 @@ public:
     // 字符串格式化,类似sprintf作用
     static int AppendFormat(std::string& ostr, const char* fmt, ...);
     static std::string Format(const char* fmt, ...);
-    static std::string Itoa(int n);
 };
 
 #define _F StrParse::Format
-#define _N StrParse::Itoa
 
 #endif

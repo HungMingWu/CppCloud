@@ -14,18 +14,16 @@ Modification :
 #include "msgprop.h"
 #include "comm/i_taskrun.h"
 
-using std::string;
-
 class ASyncPrvdMsg: public ITaskRun2
 {
     struct AMsgItem
     {
         msg_prop_t msgprop;
-        string msg;
+        std::string msg;
     };
 
 public:
-    int pushMessage( const msg_prop_t* mp, const string& msg );
+    int pushMessage( const msg_prop_t* mp, const std::string& msg );
 
 public:
     virtual int run(int p1, long p2);

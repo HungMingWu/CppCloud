@@ -19,7 +19,7 @@ Listen::~Listen(void)
 {
 }
 
-int Listen::init( const string& host, int port, int lqueue, int epfd )
+int Listen::init( const std::string& host, int port, int lqueue, int epfd )
 {
 	int ret;
 	m_evCtrl.setEPfd(epfd);

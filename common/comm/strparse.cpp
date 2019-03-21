@@ -315,7 +315,7 @@ bool StrParse::PutOneJson( std::string& jstr, const std::string& jkey, int jval,
         jstr.append("\"").append(jkey).append("\":");
     }
 
-    jstr.append(Itoa(jval));
+    jstr.append(std::to_string(jval));
 
     if (comma_end)
     {
@@ -461,10 +461,3 @@ std::string StrParse::Format( const char* fmt, ... )
 
 	return buff_alloc?buff_alloc:buff;
 }
-
-std::string StrParse::Itoa( int n )
-{
-    return Format("%d", n);
-}
-
-

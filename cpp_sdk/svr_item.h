@@ -11,22 +11,19 @@ Modification :
 #define _SVR_ITEM_H_
 #include <string>
 
-using std::string;
-
 struct svr_item_t
 {
-    string regname;
-    string url;
-    string version;
-    string host;
+    std::string regname;
+    std::string url;
+    std::string version;
+    std::string host;
     
-    int port;
-    int svrid;
-    int prvdid;
-    short protocol; // tcp=1 udp=2 http=3 https=4
-    short weight;
+    int port = 0;
+    int svrid = 0;
+    int prvdid = 0;
+    short protocol = 0; // tcp=1 udp=2 http=3 https=4
+    short weight = 0;
 
-    svr_item_t(): port(0), svrid(0), prvdid(0), protocol(0), weight(0) {}
     bool parseUrl( void );
 };
 

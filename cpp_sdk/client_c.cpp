@@ -171,7 +171,7 @@ int RegProvider( const string& regname, int prvdid, short protocol, int port, co
     IFRETURN_N(protocol < 1 || protocol > PROTOCOL_NUM, -1);
     string url;
     string localip = CloudApp::Instance()->getLocalIP();
-    url = protArr[protocol-1] + localip + ":" + _N(port) + path;
+    url = protArr[protocol-1] + localip + ":" + std::to_string(port) + path;
     
     return ProvdMgr::Instance()->regProvider(regname, prvdid, protocol, url);
 }

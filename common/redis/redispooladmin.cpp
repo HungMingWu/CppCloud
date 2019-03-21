@@ -142,8 +142,7 @@ int RedisConnPoolAdmin::RegisterPool(void)
     string tracelog;
     int okcnt = 0;
     // 此处可控制默认是延迟加载还是启动全加载, 目前是后者
-    for (map<string, redis_pool_conf_t*>::iterator it = m_all_conf.begin();
-        it != m_all_conf.end(); ++it)
+    for (auto it = m_all_conf.begin(); it != m_all_conf.end(); ++it)
     {
         redis_pool_conf_t* conf = it->second;
         tracelog.append(conf->redisname);
@@ -222,14 +221,14 @@ int RedisConnPoolAdmin::DestroyPool(const char* redisname)
 
 	if (redisname)
 	{
-		map<string, RedisConnPool*>::iterator it = m_conn_pools.find(redisname);
+		auto it = m_conn_pools.find(redisname);
 		if (m_conn_pools.end() != it)
 		{
 			delete it->second;
 			m_conn_pools.erase(it);
 		}
 
-        map<string, redis_pool_conf_t*>::iterator it2 = m_all_conf.find(redisname);
+        auto it2 = m_all_conf.find(redisname);
         if (it2 != m_all_conf.end())
         {
             redis_pool_conf_t* conf = it2->second;
@@ -243,13 +242,13 @@ int RedisConnPoolAdmin::DestroyPool(const char* redisname)
 	}
 	else
 	{
-		map<string, RedisConnPool*>::iterator it = m_conn_pools.begin();
+		auto it = m_conn_pools.begin();
 		for (; it != m_conn_pools.end(); ++it)
 		{
 			delete it->second;
 		}
 
-		map<string, redis_pool_conf_t*>::iterator it2 = m_all_conf.begin();
+		auto it2 = m_all_conf.begin();
         for (; it2 != m_all_conf.end(); ++it2)
         {
             redis_pool_conf_t* conf = it2->second;
@@ -271,11 +270,10 @@ int RedisConnPoolAdmin::GetConnect(Redis*& predis, const char* redisname)
 {
     int ret;
     RedisConnPool* pool = NULL;
-    map<string, RedisConnPool*>::iterator it;
 
     {
         std::lock_guard lk(m_lock); // 构造加锁,析构解锁
-        it = m_conn_pools.find(redisname);
+        auto it = m_conn_pools.find(redisname);
         if (m_conn_pools.end() != it)
         {
             pool = it->second;
@@ -290,7 +288,7 @@ int RedisConnPoolAdmin::GetConnect(Redis*& predis, const char* redisname)
 	{
 		// log unexcept redisname or unregister poolname
 		ret = ERR_RDS_INVALID_NAME;
-        map<string, redis_pool_conf_t*>::iterator it = m_all_conf.find(redisname);
+        auto it = m_all_conf.find(redisname);
         if (it != m_all_conf.end())
         {
             redis_pool_conf_t* conf = it->second;
@@ -339,7 +337,6 @@ void RedisConnPoolAdmin::showPoolStatus( string& strbak, const char* redisname )
 {
     RedisConnPool* pool = NULL;
     string keyname;
-    map<string, RedisConnPool*>::iterator it;
     std::lock_guard lk(m_lock); // 构造加锁,析构解锁
 
     if (redisname)
@@ -349,7 +346,7 @@ void RedisConnPoolAdmin::showPoolStatus( string& strbak, const char* redisname )
 
     if (!keyname.empty())
     {
-        it = m_conn_pools.find(keyname);
+        auto it = m_conn_pools.find(keyname);
         if (m_conn_pools.end() != it)
         {
             pool = it->second;
@@ -364,7 +361,7 @@ void RedisConnPoolAdmin::showPoolStatus( string& strbak, const char* redisname )
     }
     else
     {
-        for (it = m_conn_pools.begin(); it != m_conn_pools.end(); ++it)
+        for (auto it = m_conn_pools.begin(); it != m_conn_pools.end(); ++it)
         {
             pool = it->second;
             pool->trace_stat(strbak, false);

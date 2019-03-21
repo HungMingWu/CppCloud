@@ -37,7 +37,7 @@ BegnHand::~BegnHand(void)
 
 int BegnHand::run( int flag, long p2 )
 {
-	//setToCache(s_scommid_key, StrParse::Itoa(ss_svrid_gen));
+	//setToCache(s_scommid_key, std::to_string(ss_svrid_gen));
 	return 0;
 }
 
@@ -135,7 +135,7 @@ int BegnHand::on_CMD_WHOAMI_REQ( IOHand* iohand, const Value* doc, unsigned seqi
 			svrid = ++ss_svrid_gen + CloudConf::CppCloudServID()*1000;
 		}
 
-		str = StrParse::Itoa(svrid) + "_I";
+		str = std::to_string(svrid) + "_I";
 		ret |= CliMgr::Instance()->addAlias2Child(str, iohand);
 		ret |= CliMgr::Instance()->addAlias2Child(_F("%s_%d", INNERCLI_ALIAS_PREFIX, svrid), iohand);
 		if (ret)
@@ -149,7 +149,7 @@ int BegnHand::on_CMD_WHOAMI_REQ( IOHand* iohand, const Value* doc, unsigned seqi
 		ERRLOG_IF1(ret, "SETPROP| msg=json2map set prop fail %d| svrid=%d", ret, svrid);
 
 		// svrid属性新分配要设置
-		CliMgr::Instance()->setProperty(iohand, CONNTERID_KEY, StrParse::Itoa(svrid));
+		CliMgr::Instance()->setProperty(iohand, CONNTERID_KEY, std::to_string(svrid));
 
 		// 通知获取客户信息完成
 		ret = Notify(iohand, HEPNTF_INIT_FINISH);

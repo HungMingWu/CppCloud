@@ -274,9 +274,8 @@ template<class ValT>
 int ConfigMgr::_tryGetFromCache( ValT& oval, const string& fullqkey, const std::map<std::string, ValT >& cacheMap ) const
 {
     int ret = 1;
-    typedef typename std::map<std::string, ValT >::const_iterator CONST_INTERATOR;
 
-    CONST_INTERATOR itr = cacheMap.find(fullqkey);
+    auto itr = cacheMap.find(fullqkey);
     if (cacheMap.end() != itr)
     {
         oval = itr->second;

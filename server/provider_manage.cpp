@@ -206,7 +206,7 @@ int ProviderMgr::setProviderProperty( CliBase* cli, const void* doc, const std::
 			}
 			else if (itr->value.IsInt())
 			{
-				std::string val = StrParse::Itoa(itr->value.GetInt());
+				std::string val = std::to_string(itr->value.GetInt());
 				cli->setProperty(regname2 + ":" + key, val);
 			}
 			else if (itr->value.IsBool()) // true -> "1", false -> "0"

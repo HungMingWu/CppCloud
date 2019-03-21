@@ -150,7 +150,7 @@ int TcpInvoker::recv( unsigned& rcmdid, std::string& msg )
 
 std::string TcpInvoker::getKey( void ) const
 {
-    return m_rhost + ":" + _N(m_port);
+    return m_rhost + ":" + std::to_string(m_port);
 }
 
 time_t TcpInvoker::getAtime( void ) const

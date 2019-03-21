@@ -8,17 +8,15 @@
 #define _EXCEPTION_H_
 #include <string>
 
-using std::string;
-
 // 仅跳出当前业务流程,不关闭连接
 struct NormalExceptionOn
 {
     int code;
     unsigned cmdid;
     unsigned seqid;
-    string desc;
+    std::string desc;
 
-    NormalExceptionOn(int co, unsigned cmd, unsigned seq, const string& ds): 
+    NormalExceptionOn(int co, unsigned cmd, unsigned seq, const std::string& ds):
         code(co), cmdid(cmd), seqid(seq), desc(ds){}
     
 };
@@ -29,9 +27,9 @@ struct NormalExceptionOff
     int code;
     unsigned cmdid;
     unsigned seqid;
-    string desc;
+    std::string desc;
 
-    NormalExceptionOff(int co, unsigned cmd, unsigned seq, const string& ds): 
+    NormalExceptionOff(int co, unsigned cmd, unsigned seq, const std::string& ds):
         code(co), cmdid(cmd), seqid(seq), desc(ds){}
     
 };
@@ -39,9 +37,9 @@ struct NormalExceptionOff
 // 强制即时关闭连接
 struct OffConnException
 {
-    string reson;
+    std::string reson;
 
-    OffConnException(const string& reson_param): reson(reson_param){}
+    OffConnException(const std::string& reson_param): reson(reson_param){}
 };
 
 // 路由消息转发异常
@@ -51,11 +49,11 @@ struct RouteExException
     unsigned seqid;
     unsigned from;
     unsigned to;
-    string reson;
-    string rpath;
+    std::string reson;
+    std::string rpath;
 
-    RouteExException(unsigned req_cmd, unsigned seq, unsigned fmid, unsigned toid, 
-        const string& ds, const string& path): 
+    RouteExException(unsigned req_cmd, unsigned seq, unsigned fmid, unsigned toid,
+        const std::string& ds, const std::string& path):
         reqcmd(req_cmd), seqid(seq), from(fmid), to(toid), reson(ds), rpath(path){}
 };
 

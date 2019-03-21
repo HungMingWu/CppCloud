@@ -4,17 +4,6 @@
 #include "comm/strparse.h"
 #include "comm/simplehttp.h"
 
-
-SHttpInvokerMgr::SHttpInvokerMgr( void )
-{
-    m_eachLimitCount = 5;
-    m_invokerTimOut_sec = 3;
-}
-
-SHttpInvokerMgr::~SHttpInvokerMgr( void )
-{
-}
-
 void SHttpInvokerMgr::setLimitCount( int n )
 {
      m_eachLimitCount = n;

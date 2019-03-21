@@ -14,10 +14,9 @@ Modification :
 #include <list>
 #include <string>
 
-using std::string;
 using std::map;
 using std::list;
-typedef std::pair< string, std::pair<string, string> > Pair_Config_Value;
+typedef std::pair< std::string, std::pair<std::string, std::string> > Pair_Config_Value;
 typedef list< Pair_Config_Value > List_Config_Item;
 
 class Config
@@ -32,7 +31,7 @@ public:
     
     int reload(void);
 
-    int read(const string &strItem, const string &strLvalue,string &strValue);
+    int read(const std::string &strItem, const std::string &strLvalue,std::string &strValue);
 
 private:
     Config(const Config &);

@@ -15,7 +15,6 @@ Modification :
 
 using std::map;
 using std::list;
-using std::string;
 
 class Listen: public HEpBase
 {
@@ -24,7 +23,7 @@ public:
     Listen(void);
     virtual ~Listen(void);
 
-    int init( const string& host, int port, int lqueue, int epfd );
+    int init( const std::string& host, int port, int lqueue, int epfd );
     void uninit( void );
 
 public: // interface IEPollRun
@@ -36,9 +35,9 @@ protected:
 
 protected:
 
-	HEpEvFlag m_evCtrl;
+    HEpEvFlag m_evCtrl;
     int m_listenFd;
-	string m_workClassName;
+    std::string m_workClassName;
 
 };
 

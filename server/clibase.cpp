@@ -47,7 +47,7 @@ void CliBase::setProperty( const string& key, const string& val )
 
 void CliBase::setProperty( const string& key, int val )
 {
-	m_cliProp[key] = StrParse::Itoa(val);
+	m_cliProp[key] = std::to_string(val);
 }
 
 string CliBase::getProperty( const string& key ) const
@@ -77,7 +77,7 @@ int CliBase::Json2Map( const Value* objnode )
         }
 		else if (itr->value.IsInt())
 		{
-			string val = StrParse::Itoa(itr->value.GetInt());
+			auto val = std::to_string(itr->value.GetInt());
 			setProperty(key, val);
 		}
     }
@@ -87,7 +87,7 @@ int CliBase::Json2Map( const Value* objnode )
 
 void CliBase::setIntProperty( const string& key, int val )
 {
-	m_cliProp[key] = StrParse::Itoa(val);
+	m_cliProp[key] = std::to_string(val);
 }
 
 void CliBase::updateEra( void )

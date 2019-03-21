@@ -15,7 +15,6 @@ Modification :
 
 using std::map;
 using std::list;
-using std::string;
 
 class Listen: public HEpBase
 {
@@ -34,9 +33,9 @@ protected:
 
 protected:
 
-	HEpEvFlag m_evCtrl;
+    HEpEvFlag m_evCtrl;
     int m_listenFd;
-	string m_workClassName;
+    std::string m_workClassName;
 
 };
 

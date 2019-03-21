@@ -378,7 +378,7 @@ int Redis::hmset(const char* key, const map<string, string>& hashdata)
 {
     string strhash;
 
-    map<string, string>::const_iterator it = hashdata.begin();
+    auto it = hashdata.begin();
     for(; it != hashdata.end(); ++it)
     {
         strhash.append(" ");

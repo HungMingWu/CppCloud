@@ -456,7 +456,7 @@ void IOHand::setProperty( const string& key, const string& val )
 
 string IOHand::getProperty( const string& key )
 {
-	map<string, string>::const_iterator itr = m_cliProp.find(key);
+	auto itr = m_cliProp.find(key);
 	if (itr != m_cliProp.end())
 	{
 		return itr->second;
@@ -547,9 +547,8 @@ int IOHand::cmdProcess( IOBuffItem*& iBufItem )
 		IFBREAK_N(NULL==iBufItem, -71);
 		head_t* hdr = iBufItem->head();
 		string procClsName;
-		map<unsigned,string>::iterator it;
 
-		it = s_cmdid2clsname.find(hdr->cmdid);
+		auto it = s_cmdid2clsname.find(hdr->cmdid);
 		procClsName = (s_cmdid2clsname.end() != it) ? it->second : s_cmdid2clsname[0];
 		WARNLOG_IF1(s_cmdid2clsname.end() == it, "CMDPROCESS| msg=an undefine cmdid recv| cmdid=0x%X| mi=%s", hdr->cmdid, m_cliName.c_str());
 

@@ -84,7 +84,7 @@ bool File::CreatDir_r( const char* path )
     return true;
 }
 
-bool File::GetPath(const char* fullfile, string& path, bool nosep)
+bool File::GetPath(const char* fullfile, std::string& path, bool nosep)
 {
     struct stat buf;
     path = fullfile;
@@ -121,7 +121,7 @@ bool File::GetPath(const char* fullfile, string& path, bool nosep)
     return true;
 }
 
-bool File::GetFilename(const char* fullfile, string& name)
+bool File::GetFilename(const char* fullfile, std::string& name)
 {
     int len = strlen(fullfile);
     while (--len >= 0)
@@ -143,7 +143,7 @@ bool File::Move( const char* srcfile, const char* dstfile )
     result = rename(srcfile, dstfile);
     if (-1 == result && ENOENT == errno) // Ŀ��Ŀ¼ȱ��ʱ�ȴ���
     {
-        string dstpath;
+        std::string dstpath;
         GetPath(dstfile, dstpath, true);
         if (!dstpath.empty())
         {
@@ -177,7 +177,7 @@ bool File::RemoveDir(const char* dir_full_path)
             continue;
         }
 
-        std::string sub_path = string(dir_full_path) + '/' + dir->d_name;
+        std::string sub_path = std::string(dir_full_path) + '/' + dir->d_name;
         if(lstat(sub_path.c_str(),&st) == -1)
         {
             continue;
@@ -213,7 +213,7 @@ bool File::RemoveDir(const char* dir_full_path)
     return true;
 }
 
-void File::AdjustPath( string& path, bool useend, char dv /*= '/'*/ )
+void File::AdjustPath( std::string& path, bool useend, char dv /*= '/'*/ )
 {
     if (!path.empty())
     {

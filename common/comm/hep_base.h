@@ -14,8 +14,6 @@ Modification :
 #include "public.h"
 #include "i_taskrun.h"
 
-using std::string;
-
 // epoll 文件描述符和epoll_event状态
 struct HEpEvFlag
 {
@@ -116,9 +114,9 @@ class HEpBase: public ITaskRun2
     static void BindSon(HEpBase* parent, HEpBase* son);
     static int Notify( HEpBase* dst, int evtype, ... );
 
-    static int SendMsg(HEpBase* dst, unsigned int cmdid, unsigned int seqid, const string& strda, bool setOutAtonce=true);
+    static int SendMsg(HEpBase* dst, unsigned int cmdid, unsigned int seqid, const std::string& strda, bool setOutAtonce=true);
     static int SendMsg(HEpBase* dst, unsigned int cmdid, unsigned int seqid, bool setOutAtonce, const char* bodyfmt, ...);
-    static int SendMsgEasy(HEpBase* dst, unsigned int cmdid, unsigned int seqid, int ecode, const string& desc, bool setOutAtonce=true);
+    static int SendMsgEasy(HEpBase* dst, unsigned int cmdid, unsigned int seqid, int ecode, const std::string& desc, bool setOutAtonce=true);
 
 public:
     HEpBase( const char* name ); // macro已实现
@@ -141,7 +139,7 @@ protected:
     int transEvent( HEpBase* dst, int evtype, va_list ap );
     
 public:
-    string m_idProfile; // 客户端标识字符串,用于日志跟踪
+    std::string m_idProfile; // 客户端标识字符串,用于日志跟踪
 
 protected:
     HEpBase* m_parent;

@@ -172,13 +172,13 @@ int RouteExchage::TransMsg( Document& doc, unsigned cmdid, unsigned seqid, int f
     {
         IFBREAK_N(s_my_svrid==to, 1); // continue to cmdfunc
 
-        string searchKey = StrParse::Itoa(to) + "_";
+        string searchKey = std::to_string(to) + "_";
         CliMgr::AliasCursor finder(searchKey);
         CliBase* cliptr = finder.pop();
 
         if (NULL == cliptr && belongTo > 0)
         {
-            CliMgr::AliasCursor finder2(StrParse::Itoa(belongTo) + "_");
+            CliMgr::AliasCursor finder2(std::to_string(belongTo) + "_");
             cliptr = finder2.pop();
         }
 

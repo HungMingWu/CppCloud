@@ -14,8 +14,8 @@ Modification :
 class SHttpInvokerMgr
 {
 	SINGLETON_CLASS2(SHttpInvokerMgr)
-	SHttpInvokerMgr( void );
-	~SHttpInvokerMgr( void );
+	SHttpInvokerMgr() = default;
+	~SHttpInvokerMgr() = default;
 
 public:
 	void setLimitCount( int n );
@@ -29,8 +29,8 @@ private:
 	std::string adjustUrlPath( const std::string& url, const std::string& path ) const;
 
 private:
-	int m_eachLimitCount;
-	int m_invokerTimOut_sec;
+	int m_eachLimitCount = 5;
+	int m_invokerTimOut_sec = 3;
 };
 
 #endif

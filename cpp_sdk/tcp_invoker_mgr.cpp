@@ -63,7 +63,7 @@ void TcpInvokerMgr::relInvoker( TcpInvoker* ivk )
 {
     if (ivk && ivk->check(0))
     {
-        string key = ivk->getKey();
+        std::string key = ivk->getKey();
         gLocker.lock();
         if (m_pool[key].size() < (unsigned)m_eachLimitCount)
         {
@@ -115,7 +115,7 @@ int TcpInvokerMgr::requestByHost( std::string& resp, const std::string& reqmsg, 
     return ret;
 }
 
-int TcpInvokerMgr::request( string& resp, const string& reqmsg, const string& svrname )
+int TcpInvokerMgr::request( std::string& resp, const std::string& reqmsg, const std::string& svrname )
 {
     int ret;
     svr_item_t pvd;
@@ -124,7 +124,7 @@ int TcpInvokerMgr::request( string& resp, const string& reqmsg, const string& sv
     ERRLOG_IF1RET_N(ret, ret, "GETPROVIDER| msg=getSvrPrvd fail %d| svrname=%s", ret, svrname.c_str());
 
     int tosec = SvrConsumer::Instance()->getInvokeTimeoutSec(svrname);
-    string hostp = _F("%s:%d", pvd.host.c_str(), pvd.port);
+    std::string hostp = _F("%s:%d", pvd.host.c_str(), pvd.port);
     ret = requestByHost(resp, reqmsg, hostp, tosec);
     SvrConsumer::Instance()->addStat(pvd, 0 == ret);
     

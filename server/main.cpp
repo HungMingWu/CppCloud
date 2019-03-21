@@ -19,15 +19,15 @@
  
 
 bool g_bExit = false;
-string g_str_pwdpath;
-string g_str_exename;
+std::string g_str_pwdpath;
+std::string g_str_exename;
 
 struct ParamConf
 {
-    string inifile; // 配置文件
-    string logfile; // 日志文件全路径
-    string workpath; // 进程工作目录
-    string peerhosts; // 直连的Serv: ip1:port1-ip2:port2
+    std::string inifile; // 配置文件
+    std::string logfile; // 日志文件全路径
+    std::string workpath; // 进程工作目录
+    std::string peerhosts; // 直连的Serv: ip1:port1-ip2:port2
     int loglevel;
     int logfsize;
     int servid;
@@ -115,7 +115,7 @@ static int parse_cmdline(int argc, char** argv)
 {
     int ret = 0;
     int c;
-    string conffile(DEF_CONFILE);
+    std::string conffile(DEF_CONFILE);
 
     g_param.debug = 0;
     g_param.daemon = 0;
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
 
     // 2. 工作业务启动
     {
-        string lisnCls = CloudConf::CppCloudListenClass();
+        std::string lisnCls = CloudConf::CppCloudListenClass();
         int port = CloudConf::CppCloudListenPort();
         int taskQnum = CloudConf::CppCloudTaskQNum();
         if (FlowCtrl::Instance()->init(taskQnum))

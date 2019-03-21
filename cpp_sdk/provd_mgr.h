@@ -13,15 +13,10 @@ Modification :
 #include <string>
 #include <map>
 
-struct ProviderItem : public SvrProp
-{
-
-};
-
 class ProvdMgr
 {
     SINGLETON_CLASS2(ProvdMgr)
-    ProvdMgr( void );
+    ProvdMgr() = default;
 
 public:
     static int ReconnectNotifyCB( void* param ); // 重连后回调
@@ -29,7 +24,7 @@ public:
 public:
 
     // 获取，提供对外判断是否存在此服务
-    ProviderItem* getProvider( const string& regname, int prvdid );
+    SvrProp* getProvider( const string& regname, int prvdid );
 
     // 服务注册
     int regProvider( const string& regname, int prvdid, short protocol, const string& url );
@@ -48,14 +43,14 @@ public:
 
 private:
     int reconnectNotifyCB( void* param );
-    int registRequest( ProviderItem* pvd ) const;
+    int registRequest( const SvrProp& pvd ) const;
 
 private:
     int m_svrid;
-    int m_timeout_sec;
+    int m_timeout_sec = 0;
 
     // 服务提供者
-    std::map<string, ProviderItem*> m_provider_apps;
+    std::map<string, SvrProp> m_provider_apps;
 };
 
 #endif

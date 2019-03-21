@@ -28,10 +28,10 @@ int Config::load(const char *pPath)
     FILE *fp;
     char *p1 = NULL;
     char *p2 = NULL;
-    string strItem;
-    string strKey;
-    string strValue;
-    string strTemp;
+    std::string strItem;
+    std::string strKey;
+    std::string strValue;
+    std::string strTemp;
 
     if (NULL == pPath)
     {
@@ -142,7 +142,7 @@ int Config::unload(void)
     return 0;
 }
 
-int Config::read(const string &strItem, const string &strLvalue, string &strValue)
+int Config::read(const std::string &strItem, const std::string &strLvalue, std::string &strValue)
 {
     List_Config_Item::iterator iter;
 

@@ -4,28 +4,18 @@
 #include "comm/strparse.h"
 #include "cloud/const.h"
 
-ProvdMgr::ProvdMgr( void )
-{
-    m_timeout_sec = 2;
-}
-
 void ProvdMgr::uninit( void )
 {
-    auto itr = m_provider_apps.begin();
-    for (; itr != m_provider_apps.end(); ++itr)
-    {
-        IFDELETE(itr->second);
-    }
     m_provider_apps.clear();
 }
 
-ProviderItem* ProvdMgr::getProvider( const string& regname, int prvdid )
+SvrProp* ProvdMgr::getProvider( const string& regname, int prvdid )
 {
-    string key = regname + "%" + _N(prvdid);
+    string key = regname + "%" + std::to_string(prvdid);
     auto itr = m_provider_apps.find(key);
     if (m_provider_apps.end() != itr)
     {
-        return itr->second;
+        return &(itr->second);
     }
 
     LOGERROR("GETPROVIDER| msg=cannot find provider| regname=%s", regname.c_str());
@@ -44,7 +34,7 @@ int ProvdMgr::reconnectNotifyCB( void* param )
     auto itr = m_provider_apps.begin();
     for (; itr != m_provider_apps.end(); ++itr)
     {
-        ret |= postOut(itr->second->regname, itr->second->prvdid);
+        ret |= postOut(itr->second.regname, itr->second.prvdid);
     }
 
     ERRLOG_IF1(ret, "RECONNCB| msg=provd postOut| ret=%d", ret);
@@ -55,23 +45,22 @@ int ProvdMgr::reconnectNotifyCB( void* param )
 int ProvdMgr::regProvider( const string& regname, int prvdid, short protocol, const string& url )
 {
     int ret;
-    string key = regname + "%" + _N(prvdid);
-    ProviderItem* pvd = m_provider_apps[key];
-    ERRLOG_IF1RET_N(pvd, -60, "REGPROVIDER| msg=reg provider exist| regname=%s", regname.c_str());
+    string key = regname + "%" + std::to_string(prvdid);
+    auto it = m_provider_apps.find(key);
+    ERRLOG_IF1RET_N(it != end(m_provider_apps), -60, "REGPROVIDER| msg=reg provider exist| regname=%s", regname.c_str());
 
-    pvd = new ProviderItem;
-    pvd->regname = regname;
-    pvd->url = url;
-    pvd->prvdid = prvdid;
-    pvd->protocol = protocol;
-    pvd->enable = false;
-    pvd->weight = 100;
+    SvrProp pvd;
+    pvd.regname = regname;
+    pvd.url = url;
+    pvd.prvdid = prvdid;
+    pvd.protocol = protocol;
+    pvd.enable = false;
+    pvd.weight = 100;
 
     ret = registRequest(pvd);
     if (0 == ret)
     {
         m_provider_apps[key] = pvd;
-        pvd = NULL;
     }
 
     // 重连时，要重新注册
@@ -82,33 +71,32 @@ int ProvdMgr::regProvider( const string& regname, int prvdid, short protocol, co
         regCB = true;
     }
 
-    IFDELETE(pvd);
     return ret;
 }
 
 void ProvdMgr::setUrl( const string& regname, int prvdid, const string& url )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     if (pvd) pvd->url = url;
 }
 void ProvdMgr::setDesc( const string& regname, int prvdid, const string& desc )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     if (pvd) pvd->desc = desc;
 }
 void ProvdMgr::setWeight( const string& regname, int prvdid, short weight )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     if (pvd) pvd->weight = weight;
 }
 void ProvdMgr::setVersion( const string& regname, int prvdid, short ver )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     if (pvd) pvd->version = ver;
 }
 void ProvdMgr::setEnable( const string& regname, int prvdid, bool enable )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     if (pvd) pvd->enable = enable;
 }
 
@@ -116,11 +104,11 @@ void ProvdMgr::setEnable( const string& regname, int prvdid, bool enable )
 // param: noEpFlag 当启动阶段未进入io-epoll复用前传true； 有io-epoll复用的业务里传false
 int ProvdMgr::postOut( const string& regname, int prvdid )
 {
-    ProviderItem* pvd = getProvider(regname, prvdid);
+    SvrProp* pvd = getProvider(regname, prvdid);
     ERRLOG_IF1RET_N(NULL == pvd, -63, "POSTPROVIDER| msg=post no provider| "
             "regname=%s", regname.c_str());
     
-    int ret = registRequest(pvd);
+    int ret = registRequest(*pvd);
     return ret;
 }
 
@@ -130,26 +118,26 @@ int ProvdMgr::postOut( const string& regname, int prvdid, bool enable )
     return postOut(regname, prvdid);
 }
 
-int ProvdMgr::registRequest( ProviderItem* pvd ) const
+int ProvdMgr::registRequest( const SvrProp& pvd ) const
 {
     string resp;
     int ret;
     if (!CloudApp::Instance()->isInEpRun()) // 启动时
     {
         int ret1 = CloudApp::Instance()->begnRequest(resp, CMD_SVRREGISTER_REQ,
-            _F("{\"regname\": \"%s\", \"svrprop\": %s }", pvd->regname.c_str(), pvd->jsonStr().c_str()),
+            _F("{\"regname\": \"%s\", \"svrprop\": %s }", pvd.regname.c_str(), pvd.jsonStr().c_str()),
             false);
         string retcode;
         StrParse::PickOneJson(retcode, resp, "code");
         ret = ("0" == retcode)? 0 : -66;
 
         LOGOPT_EI(ret, "SVRREGISTER_REQ| msg=regist provider %s| ret1=%d resp=%s| regname=%s", 
-                ret?"fail":"success", ret1, resp.c_str(), pvd->regname.c_str());
+                ret?"fail":"success", ret1, resp.c_str(), pvd.regname.c_str());
     }
     else
     {
         ret = CloudApp::Instance()->postRequest(CMD_SVRREGISTER_REQ,
-            _F("{\"regname\": \"%s\", \"svrprop\": %s }", pvd->regname.c_str(), pvd->jsonStr().c_str()) );
+            _F("{\"regname\": \"%s\", \"svrprop\": %s }", pvd.regname.c_str(), pvd.jsonStr().c_str()) );
     }
 
     return ret;

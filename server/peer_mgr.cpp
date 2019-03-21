@@ -27,7 +27,7 @@ int PeerMgr::init( int epfd )
 	PeerCli::Init(m_mysvrid);
 
 	int ret = 0;
-    vector<string>::const_iterator itr = vhost.begin();
+    auto itr = vhost.begin();
     for (; itr != vhost.end(); ++itr)
     {
 		vector<string> vec;

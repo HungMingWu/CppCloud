@@ -21,9 +21,9 @@ Actmgr::~Actmgr(void)
 }
 
 
-int Actmgr::pickupWarnCliProfile( string& json, const string& filter_key, const string& filter_val )
+int Actmgr::pickupWarnCliProfile( std::string& json, const std::string& filter_key, const std::string& filter_val )
 {
-	map<string, CliBase*>::iterator itr = m_warnLog.begin();
+	auto itr = m_warnLog.begin();
 	
 	json += "[";
 
@@ -33,14 +33,14 @@ int Actmgr::pickupWarnCliProfile( string& json, const string& filter_key, const 
 		
 		if (m_pchildren->find(ptr) == m_pchildren->end()) // 被清除了的历史session
 		{
-			map<string, CliBase*>::iterator itr0 = itr; ++itr;
+			auto itr0 = itr; ++itr;
 			m_warnLog.erase(itr0);
 			continue;
 		}
 
 		if (!filter_key.empty()) // 需要过滤条件
 		{
-			string valdata = ptr->getProperty(filter_key);
+			std::string valdata = ptr->getProperty(filter_key);
 			if (!filter_val.empty() && valdata != filter_val)
 			{
 				++itr;
@@ -61,7 +61,7 @@ int Actmgr::pickupWarnCliProfile( string& json, const string& filter_key, const 
 // @param: svrid 为0时获取所有,否则单个
 // @param: key 为空时获取所有属性
 // @return 获取到的cli个数
-int Actmgr::pickupCliProfile( string& json, int svrid, const string& key )
+int Actmgr::pickupCliProfile( std::string& json, int svrid, const std::string& key )
 {
 	int count = 0;
 	json += "[";
@@ -90,12 +90,12 @@ int Actmgr::pickupCliProfile( string& json, int svrid, const string& key )
 }
 
 // 获取某个app的一项或全部属性，以json字符串返回
-void Actmgr::getJsonProp( CliBase* cli, string& outj, const string& key )
+void Actmgr::getJsonProp( CliBase* cli, std::string& outj, const std::string& key )
 {
 	outj.append("{");
 	if (key.empty())
 	{
-		map<string, string>::const_iterator itr = cli->m_cliProp.begin();
+		auto itr = cli->m_cliProp.begin();
 		for (int i = 0; itr != cli->m_cliProp.end(); ++itr, ++i)
 		{
 			if (i > 0) outj.append(",");
@@ -104,7 +104,7 @@ void Actmgr::getJsonProp( CliBase* cli, string& outj, const string& key )
 	}
 	else
 	{
-		map<string, string>::const_iterator itr = cli->m_cliProp.find(key);
+		auto itr = cli->m_cliProp.find(key);
 		if (itr != cli->m_cliProp.end())
 		{
 			StrParse::PutOneJson(outj, itr->first, itr->second);
@@ -114,7 +114,7 @@ void Actmgr::getJsonProp( CliBase* cli, string& outj, const string& key )
 }
 
 
-void Actmgr::setCloseLog( int svrid, const string& cloLog )
+void Actmgr::setCloseLog( int svrid, const std::string& cloLog )
 {
 	if (cloLog.empty())
 	{
@@ -137,11 +137,11 @@ int Actmgr::appCloseFound( CliBase* son, int clitype, const CliInfo& cliinfo )
 	int ret = -100;
 	IFRETURN_N(NULL==son, ret);
 
-	string& strsvrid = son->m_cliProp[CONNTERID_KEY];
+	std::string& strsvrid = son->m_cliProp[CONNTERID_KEY];
 	if (1 == clitype)
 	{
 		int svrid = atoi(strsvrid.c_str());
-		string jsonstr("{");
+		std::string jsonstr("{");
 		StrParse::PutOneJson(jsonstr, CONNTERID_KEY, strsvrid, true);
 		StrParse::PutOneJson(jsonstr, "name", son->m_cliProp["name"], true);
 		StrParse::PutOneJson(jsonstr, SVRNAME_KEY, son->m_cliProp[SVRNAME_KEY], true);
@@ -154,7 +154,7 @@ int Actmgr::appCloseFound( CliBase* son, int clitype, const CliInfo& cliinfo )
 	}
 
 	// 记录操作
-	string logstr = StrParse::Format("CLIENT_CLOSE| clitype=%d| svrid=%s| prog=%s| localsock=%s",
+	std::string logstr = StrParse::Format("CLIENT_CLOSE| clitype=%d| svrid=%s| prog=%s| localsock=%s",
 		clitype, strsvrid.c_str(), son->m_idProfile.c_str(), son->m_cliProp["name"].c_str());
 	appendCliOpLog(logstr);
 
@@ -163,9 +163,9 @@ int Actmgr::appCloseFound( CliBase* son, int clitype, const CliInfo& cliinfo )
 	return ret;
 }
 
-void Actmgr::appendCliOpLog( const string& logstr )
+void Actmgr::appendCliOpLog( const std::string& logstr )
 {
-	string stritem = TimeF::StrFTime("%F %T", time(NULL));
+	std::string stritem = TimeF::StrFTime("%F %T", time(NULL));
 	int i = 0;
 
 	stritem.append(": ");
@@ -182,11 +182,11 @@ void Actmgr::appendCliOpLog( const string& logstr )
 }
 
 // 获取已掉线的客户信息
-int Actmgr::pickupCliCloseLog( string& json )
+int Actmgr::pickupCliCloseLog( std::string& json )
 {
 	json += "[";
 	
-	map<int, string>::const_iterator itr = m_closeLog.begin();
+	auto itr = m_closeLog.begin();
 	for (int i = 0; itr != m_closeLog.end(); ++itr)
 	{
 		if (i++ > 0) json.append(",");
@@ -198,11 +198,11 @@ int Actmgr::pickupCliCloseLog( string& json )
 }
 
 // 获取客户行为日志信息
-int Actmgr::pickupCliOpLog( string& json, int nSize )
+int Actmgr::pickupCliOpLog( std::string& json, int nSize )
 {
 	json += "[";
 
-	list<string>::reverse_iterator itr = m_cliOpLog.rbegin();
+	auto itr = m_cliOpLog.rbegin();
 	for (int i = 0; i < nSize && itr != m_cliOpLog.rend(); ++itr)
 	{
 		if (i++ > 0) json.append(",");
@@ -213,12 +213,12 @@ int Actmgr::pickupCliOpLog( string& json, int nSize )
 	return 0;
 }
 
-void Actmgr::setWarnMsg( const string& taskkey, CliBase* ptr )
+void Actmgr::setWarnMsg( const std::string& taskkey, CliBase* ptr )
 {
 	m_warnLog[taskkey] = ptr;
 }
 
-void Actmgr::clearWarnMsg( const string& taskkey )
+void Actmgr::clearWarnMsg( const std::string& taskkey )
 {
 	if (0 == taskkey.compare("all"))
 	{

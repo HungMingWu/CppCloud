@@ -45,7 +45,7 @@ const Value* ConfJson::_findNode( const std::string& qkey ) const
 
         const Value* pval = &m_doc;
         const Value* ptmp = NULL;
-        std::vector<std::string>::const_iterator vitr = vecPattern.begin();
+        auto vitr = vecPattern.begin();
         
         for (; vitr != vecPattern.end(); ++vitr)
         {
@@ -160,7 +160,7 @@ int ConfJson::_parseVal( std::string& oval, const Value* node, bool wideVal ) co
     {
         if (wideVal) // 可将其他类型转化成string
         {
-            if (node->IsNumber()) oval = _N(node->GetInt());
+            if (node->IsNumber()) oval = std::to_string(node->GetInt());
             else if (node->IsFloat()) oval = _F("%f", node->GetFloat());
             else if (node->IsBool()) oval = node->IsTrue()? "true": "false";
             else if (node->IsObject()) oval = "_Object";

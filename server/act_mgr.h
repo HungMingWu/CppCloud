@@ -16,7 +16,6 @@ Modification :
 
 using std::map;
 using std::list;
-using std::string;
 
 class CliBase;
 struct CliInfo;
@@ -31,25 +30,25 @@ public:
 
 public:
     // 获取连接中的客户端属性信息
-    int pickupCliProfile( string& json, int svrid, const string& key );
+    int pickupCliProfile( std::string& json, int svrid, const std::string& key );
     // 获取已掉线的客户信息
-    int pickupCliCloseLog( string& json );
+    int pickupCliCloseLog( std::string& json );
     // 获取客户行为日志信息
-    int pickupCliOpLog( string& json, int nSize );
+    int pickupCliOpLog( std::string& json, int nSize );
     // 获取所有告警状态的客户机信息
-    int pickupWarnCliProfile( string& json, const string& filter_key, const string& filter_val );
+    int pickupWarnCliProfile( std::string& json, const std::string& filter_key, const std::string& filter_val );
 
 
     int appCloseFound( CliBase* son, int clitype, const CliInfo& cliinfo );
-    void setCloseLog( int svrid, const string& cloLog );
+    void setCloseLog( int svrid, const std::string& cloLog );
     void rmCloseLog( int svrid );
-    void appendCliOpLog( const string& logstr );
+    void appendCliOpLog( const std::string& logstr );
     /////////////
-    void setWarnMsg( const string& taskkey, CliBase* ptr );
-    void clearWarnMsg( const string& taskkey );
+    void setWarnMsg( const std::string& taskkey, CliBase* ptr );
+    void clearWarnMsg( const std::string& taskkey );
 
 private:
-    void getJsonProp( CliBase* cli, string& outj, const string& key );
+    void getJsonProp( CliBase* cli, std::string& outj, const std::string& key );
 
 private:
     Actmgr(void);
@@ -57,9 +56,9 @@ private:
 
 protected:
     map<CliBase*, CliInfo>* m_pchildren; // 对CliMgr.m_children的引用
-    map<string, CliBase*> m_warnLog; // 客户机告警的任务
-    map<int, string> m_closeLog; // 记录掉线了的客户机信息
-    list<string> m_cliOpLog; // 客户机的操作行为记录
+    map<std::string, CliBase*> m_warnLog; // 客户机告警的任务
+    map<int, std::string> m_closeLog; // 记录掉线了的客户机信息
+    list<std::string> m_cliOpLog; // 客户机的操作行为记录
     int m_opLogSize;
 };
 

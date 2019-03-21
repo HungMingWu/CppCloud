@@ -98,7 +98,7 @@ int BroadCastCli::toWorld( Document& doc, unsigned cmdid, unsigned seqid, bool i
 {
     int ret = 0;
     int ntmp = 0;
-    static const string str_my_svrid = _N(s_my_svrid);
+    static const string str_my_svrid = std::to_string(s_my_svrid);
     static const string str_my_svrid1 = _F("%d ", s_my_svrid);
     static const string str_my_svrid2 = _F(" %d ", s_my_svrid);
 
@@ -277,7 +277,7 @@ string BroadCastCli::diffOuterCliEra( int servid, const string& erastr )
     }
 
 	StrParse::SpliteStr(vecitem, erastr, ' ');
-	for (vector<string>::iterator itim = vecitem.begin(); itim != vecitem.end(); ++itim)
+	for (auto itim = vecitem.begin(); itim != vecitem.end(); ++itim)
 	{
 		vector<string> vecsvr;
 		StrParse::SpliteStr(vecsvr, *itim, ':');
@@ -337,13 +337,13 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
     ret = Rjson::GetInt(osvrid, BROARDCAST_KEY_FROM, doc);
     ret |= Rjson::GetStr(erastr, CLIS_ERASTRING_KEY, doc);
     ret |= Rjson::GetStr(routepath, BROARDCAST_KEY_TRAIL, doc);
-    str_osvrid = StrParse::Itoa(osvrid);
+    str_osvrid = std::to_string(osvrid);
 
     NormalExceptionOn_IFTRUE(ret||osvrid<=0, 409, CMD_BROADCAST_RSP, seqid, 
         string("invalid CMD_BROADCAST_REQ body ")+Rjson::ToString(doc));
     
     DEBUG_TRACE("a. recv svrid=%d broadcast pass by %s, msg=%s", osvrid, iohand->m_idProfile.c_str(), Rjson::ToString(doc).c_str());
-    routepath += StrParse::Itoa(s_my_svrid);
+    routepath += std::to_string(s_my_svrid);
 
     // 自身处理
     // 1. 本Serv是否存在编号为osvrid的对象
@@ -425,7 +425,7 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
         StrParse::PutOneJson(msgbody, "differa", differa, true);
         StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_JUMP, 1, true);
         StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_REFPATH, routepath, true); // 参考路线
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_TRAIL, StrParse::Itoa(s_my_svrid)+">", false); // 已经过的路线
+        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_TRAIL, std::to_string(s_my_svrid)+">", false); // 已经过的路线
         msgbody += "}";
 
         ret = iohand->sendData(CMD_CLIERA_REQ, seqid, msgbody.c_str(), msgbody.size(), true);
@@ -569,7 +569,7 @@ void BroadCastCli::AfterUpdatePropsHandle( CliBase* cli )
     {
         vector<string> vprovName;
         StrParse::SpliteStr(vprovName, svrreg, '+');
-        vector<string>::const_iterator it = vprovName.begin();
+        auto it = vprovName.begin();
         for (; it != vprovName.end(); ++it)
         {
             vector<string> vspli;

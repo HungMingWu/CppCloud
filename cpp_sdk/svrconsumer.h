@@ -45,24 +45,24 @@ public:
     virtual int qrun( int flag, long p2 );
     virtual int run(int p1, long p2);
 
-    int init( const string& svrList );
+    int init( const std::string& svrList );
     void uninit( void );
 
     void setRefreshTO( int sec );
-    void setInvokeTimeoutSec( int sec, const string& regname = "all" );
-    int getInvokeTimeoutSec( const string& regname );
+    void setInvokeTimeoutSec( int sec, const std::string& regname = "all" );
+    int getInvokeTimeoutSec( const std::string& regname );
 
     // 获取一个服务提供者信息，用于之后发起调用。
-    int getSvrPrvd( svr_item_t& pvd, const string& svrname );
+    int getSvrPrvd( svr_item_t& pvd, const std::string& svrname );
     // 更新接口调用的统计信息
     void addStat( const svr_item_t& pvd, bool isOk, int dcount=1 );
 
 private:
-    int parseResponse( string& msg );
+    int parseResponse( std::string& msg );
     int parseResponse( const void* ptr );
 
     int appendTimerq( bool force );
-    int _postSvrSearch( const string& regname ) const;
+    int _postSvrSearch( const std::string& regname ) const;
 
 private:
     std::map<std::string, SvrItem> m_allPrvds;

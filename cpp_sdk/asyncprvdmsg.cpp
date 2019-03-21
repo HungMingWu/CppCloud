@@ -6,7 +6,7 @@
 
 
 
-int ASyncPrvdMsg::pushMessage( const msg_prop_t* mp, const string& msg )
+int ASyncPrvdMsg::pushMessage( const msg_prop_t* mp, const std::string& msg )
 {
     AMsgItem msgitm;
     msgitm.msgprop = *mp;

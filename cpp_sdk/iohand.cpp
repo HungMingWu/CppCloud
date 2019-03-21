@@ -389,7 +389,7 @@ string IOHand::getProperty( const string& key ) const
 
 void IOHand::setIntProperty( const string& key, int val )
 {
-	m_cliProp[key] = StrParse::Itoa(val);
+	m_cliProp[key] = std::to_string(val);
 }
 
 int IOHand::getIntProperty( const string& key ) const

@@ -215,12 +215,12 @@ int HEpBase::Notify(HEpBase* dst, int evtype, ...)
     return ret;
 }
 
-int HEpBase::SendMsgEasy(HEpBase* dst, unsigned int cmdid, unsigned int seqid, int ecode, const string& desc, bool setOutAtonce)
+int HEpBase::SendMsgEasy(HEpBase* dst, unsigned int cmdid, unsigned int seqid, int ecode, const std::string& desc, bool setOutAtonce)
 {
     return SendMsg(dst, cmdid, seqid, setOutAtonce, "{ \"code\": %d, \"desc\": \"%s\" }", ecode, desc.c_str());
 }
 
-int HEpBase::SendMsg(HEpBase* dst, unsigned int cmdid, unsigned int seqid, const string& strda, bool setOutAtonce)
+int HEpBase::SendMsg(HEpBase* dst, unsigned int cmdid, unsigned int seqid, const std::string& strda, bool setOutAtonce)
 {
     int ret = Notify(dst, HEPNTF_SEND_MSG, cmdid, seqid, strda.c_str(), (unsigned int)strda.length());
     if (setOutAtonce)

@@ -22,7 +22,7 @@ TcpAioInvoker::TcpAioInvoker( const string& dsthostp ):
 		m_cliFd(INVALID_FD), m_seqid(0), m_timeout_interval_sec(3), m_atime(0),
 		m_epThreadID(0), m_closeFlag(0),
 		m_recv_bytes(0), m_send_bytes(0), 
-		m_recvpkg_num(0), m_sendpkg_num(0), m_iBufItem(NULL), m_oBufItem(NULL),
+		m_recvpkg_num(0), m_sendpkg_num(0), m_iBufItem(NULL),
 		m_inTimerq(false)
 {
 	size_t pos = dsthostp.find(":");
@@ -87,14 +87,12 @@ int TcpAioInvoker::_connect( void )
 void TcpAioInvoker::clearBuf( void )
 {
 	IFDELETE(m_iBufItem);
-	IFDELETE(m_oBufItem);
+	m_oBufItem.reset();
 	clearReqQueue();
 
-	IOBuffItem* buf = NULL;
+	std::unique_ptr<IOBuffItem> buf;
 	while (m_oBuffq.pop(buf, 0))
-	{
-		IFDELETE(buf);
-	}
+		buf.reset();
 }
 
 void TcpAioInvoker::clearReqQueue( void )
@@ -244,7 +242,7 @@ int TcpAioInvoker::onWrite( int p1, long p2 )
 
 		m_sendpkg_num++;
 		serv_sendpkg_num++;
-		IFDELETE(m_oBufItem);
+		m_oBufItem.reset();
 		if (m_oBuffq.size() <= 0)
 		{
 			ret = m_epCtrl.rmEvt(EPOLLOUT);
@@ -355,12 +353,11 @@ void TcpAioInvoker::appendTimerQWait( int dtsec )
 
 int TcpAioInvoker::sendData( unsigned int cmdid, unsigned int seqid, const char* body, unsigned int bodylen, bool setOutAtonce )
 {
-	IOBuffItem* obf = new IOBuffItem;
+	std::unique_ptr<IOBuffItem> obf(new IOBuffItem);
 	obf->setData(cmdid, seqid, body, bodylen);
-	if (!m_oBuffq.append(obf))
+	if (!m_oBuffq.append(std::move(obf)))
 	{
 		LOGERROR("IOHANDSNDMSG| msg=append to oBuffq fail| len=%d| mi=%s", m_oBuffq.size(), m_cliName.c_str());
-		delete obf;
 		return -77;
 	}
 
@@ -481,7 +478,7 @@ int TcpAioInvoker::request( string& resp, int cmdid, const string& reqmsg )
 {
 	static const int sec2us = 1000000;
 	int seqid = ++m_seqid;
-	auto shareQueue = std::make_shared< Queue<string, false> >();
+	auto shareQueue = std::make_shared< Queue<string> >();
 	{
 		std::unique_lock lock(m_qLock);
 		m_reqQueue[seqid] = shareQueue;

@@ -91,9 +91,9 @@ protected:
 	static int serv_sendpkg_num;
 
 	IOBuffItem* m_iBufItem;
-	IOBuffItem* m_oBufItem;
-	Queue<IOBuffItem*, true> m_oBuffq;
-	std::map< int, std::shared_ptr< Queue<string, false> > > m_reqQueue;
+	std::unique_ptr<IOBuffItem> m_oBufItem;
+	Queue<std::unique_ptr<IOBuffItem>> m_oBuffq;
+	std::map< int, std::shared_ptr< Queue<string> > > m_reqQueue;
 	std::map< int, std::tuple<time_t, InvkCBFunc> > m_reqCBQueue;
 	bool m_inTimerq;
 	std::shared_mutex m_qLock;

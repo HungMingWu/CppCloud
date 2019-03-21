@@ -9,6 +9,7 @@ Modification :
 #ifndef _IOHAND_H_
 #define _IOHAND_H_
 #include <arpa/inet.h>
+#include <memory>
 #include "comm/hep_base.h"
 #include "comm/queue.h"
 #include "cloud/iobuff.h"
@@ -70,8 +71,8 @@ protected:
 	static int serv_sendpkg_num;
 
 	IOBuffItem* m_iBufItem;
-	IOBuffItem* m_oBufItem;
-	Queue<IOBuffItem*, true> m_oBuffq;
+	std::unique_ptr<IOBuffItem> m_oBufItem;
+	Queue<std::unique_ptr<IOBuffItem>> m_oBuffq;
 
 };
 

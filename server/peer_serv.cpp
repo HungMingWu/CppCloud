@@ -189,12 +189,11 @@ int PeerServ::prepareWhoIam( void )
 
 	whoIamJson += "}";
 
-	IOBuffItem* obf = new IOBuffItem;
+	std::unique_ptr<IOBuffItem> obf(new IOBuffItem);
 	obf->setData(CMD_IAMSERV_REQ, ++m_seqid, whoIamJson.c_str(), whoIamJson.length());
-	if (!m_oBuffq.append(obf))
+	if (!m_oBuffq.append(std::move(obf)))
 	{
 		LOGERROR("PEERS_WAI| msg=append to oBuffq fail| len=%d| mi=%s", m_oBuffq.size(), m_cliName.c_str());
-		delete obf;
 		throw OffConnException("oBuffq.append fail");
 	}
 	LOGDEBUG("PEERS_WAI| msg=send iamserv req| mi=%s", m_cliName.c_str());

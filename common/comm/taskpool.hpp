@@ -6,6 +6,8 @@
  ******************************************************************/
 #ifndef __TASKPOOL_HPP_
 #define __TASKPOOL_HPP_
+#include <thread>
+#include <vector>
 #include "public.h"
 #include "queue.h"
 
@@ -38,7 +40,7 @@ template< class TIRun, int (TIRun::*run_fun)(int, long), int runparam=0, int exi
 class TaskPoolEx
 {
 public:
-    TaskPoolEx(void):m_threadcount(3), m_exit(false){}
+    TaskPoolEx() = default;
 
     int init(int threadcount)
     {
@@ -48,19 +50,13 @@ public:
 
     int unInit(void)
     {
-        pthread_t tid;
         if (!m_exit)
         {
             setExit();
         }
 
-        while (m_tid.size() > 0)
-        {
-            if (m_tid.pop(tid))
-            {
-                pthread_join(tid, NULL);
-            }
-        }
+        for (auto &t : m_threads)
+            t.join();
 
         m_tasks.each(ClsTask, true);
         return 0;
@@ -92,14 +88,23 @@ public:
                 m_tasks.size());
 
             taskcount = m_tasks.size();
-            threadcount = (int)m_tid.size();
+            threadcount = (int)m_threads.size();
             if (taskcount > threadcount && threadcount < m_threadcount)
             {
-                pthread_t tid;
-                ret = pthread_create(&tid, NULL, _ThreadFun, this);
-                m_tid.append(tid);
-                LOGDEBUG("TASKTHREAD| msg=create task thread| tid=%x| thread=%d/%d",
-                    (int)tid, threadcount+1, m_threadcount);
+                m_threads.emplace_back([this]() {
+                    while (!m_exit)
+                    {
+                        TIRun* tsk = NULL;
+                        m_tasks.pop_delay(tsk);
+                        if (tsk && !m_exit)
+                        {
+	                    (tsk->*run_fun)(runparam, 1);
+                        }
+                    }
+                    LOGDEBUG("TASKTHREAD| msg=normal thread exit|");
+                });
+                LOGDEBUG("TASKTHREAD| msg=create task thread| thread=%d/%d",
+                    threadcount+1, m_threadcount);
             }
         }
         while (0);
@@ -108,34 +113,15 @@ public:
     }
 
 private:
-    // 任务线程入口
-    static void* _ThreadFun(void* arg)
-    {
-        TaskPoolEx* This = (TaskPoolEx*)arg;
-
-        while (!This->m_exit)
-        {
-            TIRun* tsk = NULL;
-            This->m_tasks.pop_delay(tsk);
-            
-            if (tsk && !This->m_exit)
-            {
-                (tsk->*run_fun)(runparam, 1);
-            }
-        }
-
-        LOGDEBUG("TASKTHREAD| msg=normal thread exit| tid=%x", (int)pthread_self());
-        return 0;
-    }
 
     // 程序退出时清理未完成的任务
     static void ClsTask(TIRun*& task) { if (task) { (task->*run_fun)(exitparam, 0); } }
 
 private:
     Queue<TIRun*> m_tasks;
-    Queue<pthread_t> m_tid;
-    int m_threadcount; // 最大线程数
-    bool m_exit;
+    std::vector<std::thread> m_threads;
+    int m_threadcount = 3; // 最大线程数
+    bool m_exit = false;
 };
 
 #endif

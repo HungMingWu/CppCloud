@@ -22,12 +22,6 @@ Modification Log:
 
 #define USE_QUEUE_CPP // 如果想单独使用此文件,脱离queue.cpp,则注释此行
 
-template<bool isPtr=false>
-class Bool2Type
-{
-	enum{eType = isPtr};
-};
-
 #ifdef USE_QUEUE_CPP
 bool operator<(struct timeval l, struct timeval r);
 #else
@@ -38,7 +32,7 @@ static bool operator<(struct timeval l, struct timeval r)
 }
 #endif
 
-template< typename T, bool isPtr=false, typename storage=std::deque<T> >
+template< typename T, typename storage=std::deque<T> >
 class Queue
 {
     //struct timeval m_basetime; // 毫秒计时起点
@@ -204,8 +198,6 @@ public:
 	
     virtual ~Queue()
 	{
-		desDel(Bool2Type<isPtr>() );
-		
 		pthread_cond_broadcast(&m_cond);
 		pthread_mutex_unlock(&m_mutex);
 		pthread_cond_destroy(&m_cond);
@@ -227,23 +219,6 @@ public:
         m_nListMaxSize = nMaxSize;
     }
 
-	void desDel(Bool2Type<false>)
-	{
-		
-	}
-	void desDel(Bool2Type<true>)
-	{
-		//cout << "调用删除析构\n";
-		
-		pthread_mutex_lock(&m_mutex);
-		for ( auto iter = m_list.begin(); iter !=m_list.end(); iter++ )
-		{
-			if(NULL != *iter)
-			delete ( *iter );
-		}
-		pthread_mutex_unlock(&m_mutex);
-		
-	}
     void insert(int index,  const T &pNode)
     {
         pthread_mutex_lock(&m_mutex);
@@ -254,7 +229,7 @@ public:
         pthread_mutex_unlock(&m_mutex);
     }
 	
-    bool append(const T &pNode, int nMaxWaitSeconds = 0)
+    bool append(T pNode, int nMaxWaitSeconds = 0)
     {
         bool bRet = false;
 
@@ -265,7 +240,7 @@ public:
             pthread_mutex_lock(&m_mutex);
             if (m_list.size() < m_nListMaxSize)
             {
-                m_list.push_back(pNode);
+                m_list.push_back(std::move(pNode));
                 bRet = true;
                 pthread_cond_signal(&m_cond);
             }
@@ -334,7 +309,7 @@ public:
 			return false;
 		}
 
-		t = m_list.front();
+		t = std::move(m_list.front());
 		m_list.pop_front();
 		
 		pthread_mutex_unlock(&m_mutex);

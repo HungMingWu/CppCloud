@@ -10,6 +10,7 @@ Modification :
 #define _IOHAND_H_
 #include <arpa/inet.h>
 #include <limits.h>
+#include <memory>
 #include "comm/hep_base.h"
 #include "comm/queue.h"
 #include "cloud/iobuff.h"
@@ -96,8 +97,8 @@ protected:
 	static PEVENT_FUNC m_parentEvHandle;
 
 	IOBuffItem* m_iBufItem;
-	IOBuffItem* m_oBufItem;
-	Queue<IOBuffItem*, true> m_oBuffq;
+	std::unique_ptr<IOBuffItem> m_oBufItem;
+	Queue<std::unique_ptr<IOBuffItem>> m_oBuffq;
 	std::map<unsigned, cmdhandle_t> m_cmdidHandle;
 
 public:

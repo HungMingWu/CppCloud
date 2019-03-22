@@ -109,7 +109,7 @@ void IOHand::clearBuf( void )
 int IOHand::_AddInterceptor( unsigned cmdid, const string& funcname )
 {
 	int ret = -75;
-	HEpBase::ProcOneFunT procFunc = GetProcFunc(funcname.c_str());
+	HEpBase::ProcOneFunT procFunc = GetProcFunc(funcname);
 	if (procFunc)
 	{
 		s_cmdid2interceptor[cmdid].push_back(procFunc);
@@ -554,7 +554,7 @@ int IOHand::cmdProcess( IOBuffItem*& iBufItem )
 		/* 首先从cmdid对应到处理类名procClsName,
 		   再看该类名有无处理函数ProcessOne(要注册到s_procfunc),用函数处理业备;
 		   如果没有就创建处理类对象,用对象处理业务.  */
-		HEpBase::ProcOneFunT procFunc = GetProcFunc(procClsName.c_str());
+		HEpBase::ProcOneFunT procFunc = GetProcFunc(procClsName);
 		if (procFunc)
 		{
 			ret = procFunc(this, hdr->cmdid, (void*)iBufItem);

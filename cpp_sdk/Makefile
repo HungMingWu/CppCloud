@@ -79,15 +79,15 @@ help:
 sample_conf: sample_conf.cpp
 	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_prvd: sample_prvd.cpp
-	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 -pthread $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_tcp_invk: sample_tcp_invk.cpp
-	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 -pthread $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_http_invk: sample_http_invk.cpp
 	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 agent_prvd: agent_prvd.cpp
 	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 sample_prvd0: sample_prvd0.cpp
-	g++ -Wall -g -std=c++17 $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
+	g++ -Wall -g -std=c++17 -pthread $^  -o $@ libsdk_cppcloud.so  ../common/libhocomm.so
 
 install:
 	@install -d $(INSTALLDIR)

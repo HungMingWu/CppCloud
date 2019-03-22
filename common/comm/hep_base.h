@@ -9,6 +9,7 @@ Modification :
 #ifndef _HEP_BASE_H_
 #define _HEP_BASE_H_
 #include <string>
+#include <string_view>
 #include <stdarg.h>
 #include <functional>
 #include "public.h"
@@ -108,7 +109,7 @@ class HEpBase: public ITaskRun2
     using ProcOneFunT = std::function<int(void*, unsigned, void*)>;
     static void RegisterClass(const char* regname, HEpBase* stdptr);
     static void RegisterFunc(const char* regname, ProcOneFunT func);
-    static ProcOneFunT GetProcFunc(const char* regname);
+    static ProcOneFunT GetProcFunc(std::string_view regname);
 
     static HEpBase* New(const char* regname);
     static void BindSon(HEpBase* parent, HEpBase* son);

@@ -41,7 +41,7 @@ int FlowCtrl::init(int tskqNum)
     if (tskqNum > 0 && NULL == m_hepo && NULL == m_tskq)
     {
         m_hepo = new HEpoll;
-        m_tskq = new TaskPoolEx<HEpBase, &HEpBase::qrun>[tskqNum];
+        m_tskq = new TaskPoolEx[tskqNum];
         m_tskqNum = tskqNum; 
         CliBase::Init(CloudConf::CppCloudServID());
         IOHand::Init();
@@ -79,7 +79,7 @@ int FlowCtrl::addListen(const char* lisnClassName, int port, const char* svrhost
 int FlowCtrl::appendTask( HEpBase* tsk, int qidx, int delay_ms )
 {
     ERRLOG_IF1RET_N(NULL == tsk || qidx >= m_tskqNum, -12, "APPENDTASK| msg=append task[%d] fail| tsk=%p", qidx, tsk);
-    bool bret = m_tskq[qidx].addTask(tsk, delay_ms);
+    bool bret = m_tskq[qidx].addTask(std::bind(&HEpBase::qrun, tsk, std::placeholders::_1, std::placeholders::_2), delay_ms);
     return bret? 0: -13;
 }
 

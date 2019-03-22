@@ -7,7 +7,7 @@
 
 // 标准生成模板
 static std::map<std::string, HEpBase*> s_stdobj;
-static std::map<std::string, HEpBase::ProcOneFunT> s_procfunc;
+static std::map<std::string, HEpBase::ProcOneFunT, std::less<>> s_procfunc;
 
 HEpEvFlag::HEpEvFlag(void): m_epfd(INVALID_FD), m_actFd(INVALID_FD), m_eventFg(0), m_ptr(NULL)
 {}
@@ -150,18 +150,12 @@ void HEpBase::RegisterFunc(const char* name, ProcOneFunT func)
     }   
 }
 
-HEpBase::ProcOneFunT HEpBase::GetProcFunc(const char* regname)
+HEpBase::ProcOneFunT HEpBase::GetProcFunc(std::string_view regname)
 {
-    if (regname)
-    {
-        auto it = s_procfunc.find(regname);
-        if (it != s_procfunc.end())
-        {
-            return it->second;
-        }
-    }
-
-    return NULL;
+    auto it = s_procfunc.find(regname);
+    if (it != s_procfunc.end())
+        return it->second;
+    return nullptr;
 }
 
 HEpBase* HEpBase::New(const char* name)

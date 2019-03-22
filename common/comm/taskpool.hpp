@@ -6,6 +6,7 @@
  ******************************************************************/
 #ifndef __TASKPOOL_HPP_
 #define __TASKPOOL_HPP_
+#include <functional>
 #include <thread>
 #include <vector>
 #include "public.h"
@@ -36,9 +37,11 @@
     tq.uninit(); // wait thread exit end
 */
 
-template< class TIRun, int (TIRun::*run_fun)(int, long), int runparam=0, int exitparam=1 >
 class TaskPoolEx
 {
+    constexpr static int runparam = 0;
+    constexpr static int exitparam = 1;
+    using TIRun = std::function<int(int, long)>;
 public:
     TaskPoolEx() = default;
 
@@ -73,7 +76,7 @@ public:
     int size(void){ return m_tasks.size(); }
 
     // 添加任务进队列 // 调用addTask(d)后,下次异步进入d->run_fun();
-    int addTask(TIRun* task, int delay_ms = 0)
+    int addTask(TIRun task, int delay_ms = 0)
     {
         int ret = 0;
         int taskcount;
@@ -82,7 +85,6 @@ public:
         do
         {
             ERRLOG_IF1BRK(m_exit, -1, "ADDTASK| msg=wait exiting");
-            IFBREAK_N(NULL==task, -2);
 
             ERRLOG_IF1BRK(!m_tasks.append_delay(task, delay_ms), -3, "ADDTASK| msg=append fail| size=%d",
                 m_tasks.size());
@@ -94,11 +96,11 @@ public:
                 m_threads.emplace_back([this]() {
                     while (!m_exit)
                     {
-                        TIRun* tsk = NULL;
+                        TIRun tsk;
                         m_tasks.pop_delay(tsk);
-                        if (tsk && !m_exit)
+                        if (!m_exit)
                         {
-	                    (tsk->*run_fun)(runparam, 1);
+	                    tsk(runparam, 1);
                         }
                     }
                     LOGDEBUG("TASKTHREAD| msg=normal thread exit|");
@@ -115,10 +117,9 @@ public:
 private:
 
     // 程序退出时清理未完成的任务
-    static void ClsTask(TIRun*& task) { if (task) { (task->*run_fun)(exitparam, 0); } }
-
+    static void ClsTask(TIRun& task) { task(exitparam, 0); }
 private:
-    Queue<TIRun*> m_tasks;
+    Queue<TIRun> m_tasks;
     std::vector<std::thread> m_threads;
     int m_threadcount = 3; // 最大线程数
     bool m_exit = false;

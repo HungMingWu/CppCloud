@@ -36,7 +36,7 @@ protected: // for singleton func
  
 private:
     HEpoll* m_hepo; // io handle
-    TaskPoolEx<HEpBase, &HEpBase::qrun>* m_tskq;
+    TaskPoolEx* m_tskq;
     HEpBase* m_listener;
     int m_tskqNum;
     int m_mysvrid;

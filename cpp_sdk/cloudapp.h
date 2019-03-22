@@ -32,7 +32,6 @@ public:
 	
 	int onCMD_WHOAMI_RSP( string& whoamiResp );
 	int onSyncMsg( void* ptr, unsigned cmdid, void* param );
-	int onCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param );
 	//int onCMD_WEBCTRL_REQ( void* ptr, unsigned cmdid, void* param );
 	// ****** message handle end *******
 

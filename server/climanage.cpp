@@ -51,7 +51,6 @@ int CliMgr::addChild( CliBase* child, bool inCtrl )
 	ERRLOG_IF1(cliinfo.t0 > 0, "ADDCLICHILD| msg=child has exist| newchild=%p| t0=%d", child, (int)cliinfo.t0);
 	cliinfo.t0 = time(NULL);
 	cliinfo.inControl = inCtrl;
-	cliinfo.cliProp = &child->m_cliProp;
 	return 0;
 }
 
@@ -342,17 +341,10 @@ void CliMgr::addCliCloseConsumerFunc( CliPreCloseNotifyFunc func )
 int CliMgr::progExitHanele( int flg )
 {
 	LOGDEBUG("CLIMGREXIT| %s", selfStat(true).c_str());
-	map<CliBase*, CliInfo>::iterator it = m_children.begin();
-	for (; it != m_children.end(); )
-	{
-		map<CliBase*, CliInfo>::iterator preit = it;
-		++it;
-		if (preit->first->isLocal())
-		{
-			preit->first->run(HEFG_PEXIT, 2); /// #PROG_EXITFLOW(5)
+	for (auto it = m_children.begin(); it != m_children.end(); it++)
+		if (it->first->isLocal())
+			it->first->run(HEFG_PEXIT, 2); /// #PROG_EXITFLOW(5)
 
-		}
-	}
 
 	LOGDEBUG("CLIMGREXIT| %s", selfStat(true).c_str());
 	return 0;

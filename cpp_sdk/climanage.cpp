@@ -66,7 +66,6 @@ int CliMgr::addChild( IOHand* child, bool inCtrl )
 	ERRLOG_IF1(cliinfo.t0 > 0, "ADDCLICHILD| msg=child has exist| newchild=%p| t0=%d", child, (int)cliinfo.t0);
 	cliinfo.t0 = time(NULL);
 	cliinfo.inControl = inCtrl;
-	cliinfo.cliProp = &child->m_cliProp;
 	return 0;
 }
 
@@ -174,34 +173,6 @@ CliInfo* CliMgr::getCliInfo( IOHand* child )
 	return (itr!=m_children.end() ? &itr->second : NULL);
 }
 
-int CliMgr::getLocalAllCliJson( std::string& jstr )
-{
-	int ret = 0;
-
-	jstr += "[";
-	map<IOHand*, CliInfo>::iterator it = m_children.begin();
-	for (int i = 0; it != m_children.end(); ++it)
-	{
-		IOHand* ptr = it->first;
-		//if (ptr->isLocal() && ptr->getCliType() > 1)
-		{
-			if (i > 0) jstr += ",";
-			jstr += "{";
-			//ptr->serialize(jstr);
-			//StrParse::PutOneJson(jstr, "ERAN", 
-			//StrParse::Format("%s:%d:%d ", 
-			//	ptr->getProperty(CONNTERID_KEY).c_str(), 
-			//	ptr->m_era, it->second.t1), false); // 无逗号结束
-			jstr += "}";
-			++i;
-			++ret;
-		}
-	}
-	jstr += "]";
-
-	return ret;
-}
-
 void CliMgr::updateCliTime( IOHand* child )
 {
 	CliInfo* clif = getCliInfo(child);
@@ -272,13 +243,8 @@ int CliMgr::onChildEvent( int evtype, va_list ap )
 int CliMgr::progExitHanele( int flg )
 {
 	LOGDEBUG("CLIMGREXIT| %s", selfStat(true).c_str());
-	map<IOHand*, CliInfo>::iterator it = m_children.begin();
-	for (; it != m_children.end(); )
-	{
-		map<IOHand*, CliInfo>::iterator preit = it;
-		++it;
-		preit->first->run(HEFG_PEXIT, 2); /// #PROG_EXITFLOW(5)
-	}
+	for (auto it = m_children.begin(); it != m_children.end(); it++)
+		it->first->run(HEFG_PEXIT, 2); /// #PROG_EXITFLOW(5)
 
 	LOGDEBUG("CLIMGREXIT| %s", selfStat(true).c_str());
 	return 0;

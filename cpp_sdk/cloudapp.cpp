@@ -313,10 +313,6 @@ int CloudApp::OnShowMsg( void* ptr, unsigned cmdid, void* param )
 
 int CloudApp::OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
 {
-    return onCMD_EVNOTIFY_REQ(ptr, cmdid, param);
-}
-int CloudApp::onCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
-{
 	MSGHANDLE_PARSEHEAD(true);
 	RJSON_GETSTR_D(notify, &doc);
 

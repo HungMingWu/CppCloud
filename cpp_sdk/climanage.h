@@ -27,7 +27,6 @@ struct CliInfo
     time_t t0 = 0, t1 = 0, t2 = 0; // 连接时间，活动时间，关闭时间
     bool inControl = true; // 如果为true,当调用removeAliasChild删除时会delete对象
     std::map<std::string, bool> aliasName; // 客户端的别名，其他人可以通过该别人找到此对象
-    std::map<std::string, std::string>* cliProp = nullptr; // 客户属性
 };
 
 
@@ -59,7 +58,6 @@ public:
     IOHand* getChildBySvrid( int svrid );
     CliInfo* getCliInfo( IOHand* child );
     map<IOHand*, CliInfo>* getAllChild() { return &m_children; }
-    int getLocalAllCliJson( std::string& jstr );
 
     void updateCliTime( IOHand* child );
 

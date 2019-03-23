@@ -322,21 +322,21 @@ int CloudApp::OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
 	RJSON_VGETINT_D(to, ROUTE_MSG_KEY_FROM, &doc);
 
 	int code = 0;
-	string resp("{");
-	
-	if (1 == _notifyHandle(resp, code, notify, &doc))
+	nlohmann::json obj;
+	std::string resp;
+	if (1 == _notifyHandle(obj, code, notify, &doc))
 	{
-		StrParse::PutOneJson(resp, "result", string("unknow notify ")+notify, true);
+		obj["result"] = string("unknow notify ") + notify;
 		WARNLOG_IF1(0 == handCount, "EVNOTIFY| msg=no callback| notify=%s", notify.c_str());
 	}
 
 	if (to > 0)
 	{
-		StrParse::PutOneJson(resp, "code", code, true);
-		StrParse::PutOneJson(resp, "notify_r", notify, true);
-		StrParse::PutOneJson(resp, ROUTE_MSG_KEY_FROM, m_appid, true);
-		StrParse::PutOneJson(resp, ROUTE_MSG_KEY_TO, to, false);
-		resp += "}";
+		obj["code"] = code;
+		obj["notify_r"] = notify;
+		obj[ROUTE_MSG_KEY_FROM] = m_appid;
+		obj[ROUTE_MSG_KEY_TO] = to;
+		resp = obj.dump();
 		sendData(CMD_EVNOTIFY_RSP, seqid, resp.c_str(), resp.length(), true);		
 	}
 
@@ -358,7 +358,7 @@ int CloudApp::OnCMD_EVNOTIFY_REQ( void* ptr, unsigned cmdid, void* param )
 	return 0;
 }
 
-int CloudApp::_notifyHandle( string& resp, int& code, const string& notify, const void* vdoc )
+int CloudApp::_notifyHandle( nlohmann::json& obj, int& code, const string& notify, const void* vdoc )
 {
 	int ret = 0;
 	int force = 0;
@@ -367,13 +367,13 @@ int CloudApp::_notifyHandle( string& resp, int& code, const string& notify, cons
 	const Value* doc = (const Document*)vdoc;
 	if ("check-alive" == notify) // 此处处理各命令
 	{
-		StrParse::PutOneJson(resp, "result", time(NULL), true);
+		obj["result"] = (int)time(NULL);
 	}
 	else if ("exit" == notify)
 	{
 		RJSON_GETINT(force, doc);
 		RJSON_GETINT(exitcode, doc);
-		StrParse::PutOneJson(resp, "result", "success", true);
+		obj["result"] = "success";
 	}
 	else if ("shellcmd" == notify)
 	{
@@ -388,13 +388,13 @@ int CloudApp::_notifyHandle( string& resp, int& code, const string& notify, cons
 			}
 		}
 		code = onNotifyShellCmd(outtxt, cmdid);
-		StrParse::PutOneJson(resp, "result", outtxt, true);
+		obj["result"] = outtxt;
 	}
 	else if ("iostat" == notify)
 	{
 		string ostat;
 		getIOStatJson(ostat);
-		resp += "\"result\":{" + ostat + "},";
+		obj["result"] = { ostat };
 	}
 	else if (APP_ALIAS_NAME == notify)
 	{
@@ -405,7 +405,7 @@ int CloudApp::_notifyHandle( string& resp, int& code, const string& notify, cons
 			string reqmsg = _F("{\"%s\": \"%s\"}", APP_ALIAS_NAME, name.c_str());
 			
 			code = postRequest(CMD_SETARGS_REQ, reqmsg);
-			StrParse::PutOneJson(resp, "result", string("success set to ") + name, true);
+			obj["result"] = std::string("success set to ") + name;
 		}
 	}
 	else if ("provider" == notify)
@@ -433,12 +433,12 @@ int CloudApp::_notifyHandle( string& resp, int& code, const string& notify, cons
 		if (!desc.empty())
 		{
 			ProvdMgr::Instance()->postOut(regname, prvdid);
-			StrParse::PutOneJson(resp, "result", desc, true);
+			obj["result"] = desc;
 		}
 		else
 		{
 			code = 404;
-			StrParse::PutOneJson(resp, "result", _F("no %s%%%d", regname.c_str(), prvdid), true);
+			obj["result"] = _F("no %s%%%d", regname.c_str(), prvdid);
 		}
 	}
 	else
@@ -540,28 +540,21 @@ void CloudApp::uninit( void )
 
 string CloudApp::whoamiMsg( void ) const
 {
-	string whoIamJson;
-
-	whoIamJson += "{";
-	StrParse::PutOneJson(whoIamJson, CONNTERID_KEY, m_appid, true);
-	StrParse::PutOneJson(whoIamJson, SVRNAME_KEY, m_svrname.c_str(), true);
-	StrParse::PutOneJson(whoIamJson, CLISOCKET_KEY, Sock::sock_name(m_cliFd, true, false), true);
-	StrParse::PutOneJson(whoIamJson, "begin_time", (int)time(NULL), true);
+        nlohmann::json whoIam {
+		{CONNTERID_KEY, m_appid},
+		{SVRNAME_KEY, m_svrname},
+		{CLISOCKET_KEY, Sock::sock_name(m_cliFd, true, false)},
+		{"begin_time", (int)time(NULL)},
+		{"pid", getpid()},
+		{CLIENT_TYPE_KEY, m_cliType}
+        };
 
 	if (!m_tag.empty())
-	{
-		StrParse::PutOneJson(whoIamJson, "tag", m_tag,true);
-	}
+		whoIam["tag"] = m_tag;
 	if (!m_2ndName.empty())
-	{
-		StrParse::PutOneJson(whoIamJson, APP_ALIAS_NAME, m_2ndName, true);
-	}
+		whoIam[APP_ALIAS_NAME] = m_2ndName;
 	
-	StrParse::PutOneJson(whoIamJson, "pid", getpid(), true);
-	StrParse::PutOneJson(whoIamJson, CLIENT_TYPE_KEY, m_cliType, false);
-
-	whoIamJson += "}";
-	return whoIamJson;
+	return whoIam.dump();
 }
 
 string CloudApp::getMConf( void ) const

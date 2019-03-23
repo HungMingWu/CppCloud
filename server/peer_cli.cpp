@@ -85,17 +85,15 @@ int PeerCli::on_CMD_IAMSERV_REQ( const Value* doc, unsigned seqid )
     m_iohand->setAuthFlag(1);
 
     // 响应回复
-    string whoIamJson;
-
-	whoIamJson += "{";
-	StrParse::PutOneJson(whoIamJson, CONNTERID_KEY, s_my_svrid, true);
-	StrParse::PutOneJson(whoIamJson, SVRNAME_KEY, MYSERVNAME, true);
-	StrParse::PutOneJson(whoIamJson, CLISOCKET_KEY, m_iohand->getCliSockName(), true);
-	StrParse::PutOneJson(whoIamJson, "begin_time", (int)time(NULL), true);
-	
-	StrParse::PutOneJson(whoIamJson, "pid", getpid(), true);
-	StrParse::PutOneJson(whoIamJson, CLIENT_TYPE_KEY, 1, false);
-	whoIamJson += "}";
+    nlohmann::json whoIam {
+	    {CONNTERID_KEY, s_my_svrid},
+	    {SVRNAME_KEY, MYSERVNAME},
+	    {CLISOCKET_KEY, m_iohand->getCliSockName()},
+	    {"begin_time", (int)time(NULL)},
+	    {"pid", getpid()},
+	    {CLIENT_TYPE_KEY, 1}
+    };
+    string whoIamJson = whoIam.dump();;
 
     m_iohand->sendData(CMD_IAMSERV_RSP, seqid, whoIamJson.c_str(), whoIamJson.length(), true);
     LOGINFO("IAMSERV_REQ| msg=recv from Serv at %s", m_iohand->m_idProfile.c_str());

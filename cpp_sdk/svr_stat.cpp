@@ -2,26 +2,22 @@
 #include "comm/strparse.h"
 #include "cloud/switchhand.h"
 #include "cloudapp.h"
+#include "comm/json.hpp"
 
 std::string SvrStat::CountEntry::jsonStr( void ) const
 {
-    bool valid = false;
-    std::string jmsg("{");
-
-    StrParse::PutOneJson(jmsg, "regname", regname, true);
-#define PUTJSON(keyname) if (keyname > 0) { valid = true; \
-    StrParse::PutOneJson(jmsg, #keyname, keyname, true); }
-    PUTJSON(svrid);
-    PUTJSON(pvd_ok);
-    PUTJSON(pvd_ng);
-    PUTJSON(ivk_ok);
-    PUTJSON(ivk_ng);
-    PUTJSON(ivk_dok);
-    PUTJSON(ivk_dng);
-    StrParse::PutOneJson(jmsg, "prvdid", prvdid, false);
-    jmsg += "}";
-
-    return valid ? jmsg : "";
+    nlohmann::json obj {
+	{"svrid", svrid},
+	{"pvd_ok", pvd_ok},
+	{"pvd_ng", pvd_ng},
+	{"ivk_ok", ivk_ok},
+	{"ivk_ng", ivk_ng},
+	{"ivk_dok", ivk_dok},
+	{"ivk_dng", ivk_dng},
+	{"prvdid", prvdid},
+	{"regname", regname}
+    };
+    return obj.dump();
 }
 
 void SvrStat::CountEntry::cleanDeltaCount( void )

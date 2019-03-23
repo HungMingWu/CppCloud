@@ -62,8 +62,8 @@ public:
 
     // era相关
     std::string getLocalClisEraString( void );
-    int getLocalAllCliJson( std::string& jstr );
-    int getLocalCliJsonByDiffera( std::string& jstr, const std::string& differa );
+    std::vector<nlohmann::json> getLocalAllCliJson();
+    std::vector<nlohmann::json> getLocalCliJsonByDiffera(const std::string& differa);
     std::string diffOuterCliEra( const std::string& erastr );
 
 

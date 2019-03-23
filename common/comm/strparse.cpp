@@ -290,41 +290,6 @@ int StrParse::PickOneJson(std::string& ostr, const std::string& src, const std::
     return ret;
 }
 
-// @summery: PutOneJson(jobj, "kk", "val1") => jobj="\"kk\": \"val1\"" ;
-bool StrParse::PutOneJson( std::string& jstr, const std::string& jkey, const std::string& jvalue, bool comma_end /*= false*/ )
-{
-    if (!jkey.empty())
-    {
-        jstr.append("\"").append(jkey).append("\":");
-    }
-
-    jstr.append("\"").append(jvalue).append("\"");
-
-    if (comma_end)
-    {
-        jstr.append(", ");
-    }
-
-    return true;
-}
-
-bool StrParse::PutOneJson( std::string& jstr, const std::string& jkey, int jval, bool comma_end /*= false*/ )
-{
-    if (!jkey.empty())
-    {
-        jstr.append("\"").append(jkey).append("\":");
-    }
-
-    jstr.append(std::to_string(jval));
-
-    if (comma_end)
-    {
-        jstr.append(", ");
-    }
-
-    return true;
-}
-
 void StrParse::AdjustPath( std::string& path, bool useend, char dv /*= '/'*/ )
 {
 	if (!path.empty())

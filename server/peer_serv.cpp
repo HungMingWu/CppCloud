@@ -7,7 +7,7 @@
 #include "cloud/exception.h"
 #include "climanage.h"
 #include "cloud/switchhand.h"
-
+#include "comm/json.hpp"
 
 HEPMUTICLASS_IMPL(PeerServ, PeerServ, IOHand)
 
@@ -176,18 +176,15 @@ int PeerServ::taskRun( int flag, long p2 )
 // 准备好发送的包,等连接OK后发出
 int PeerServ::prepareWhoIam( void )
 {
-	std::string whoIamJson;
-
-	whoIamJson += "{";
-	StrParse::PutOneJson(whoIamJson, CONNTERID_KEY, s_my_svrid, true);
-	StrParse::PutOneJson(whoIamJson, SVRNAME_KEY, MYSERVNAME, true);
-	StrParse::PutOneJson(whoIamJson, CLISOCKET_KEY, Sock::sock_name(m_cliFd, true, false), true);
-	StrParse::PutOneJson(whoIamJson, "begin_time", (int)time(NULL), true);
-	
-	StrParse::PutOneJson(whoIamJson, "pid", getpid(), true);
-	StrParse::PutOneJson(whoIamJson, CLIENT_TYPE_KEY, m_cliType, false);
-
-	whoIamJson += "}";
+	nlohmann::json whoIam {
+		{CONNTERID_KEY, s_my_svrid},
+		{SVRNAME_KEY, MYSERVNAME},
+		{CLISOCKET_KEY, Sock::sock_name(m_cliFd, true, false)},
+		{"begin_time", (int)time(NULL)},
+		{"pid", getpid()},
+		{CLIENT_TYPE_KEY, m_cliType}
+	};
+	std::string whoIamJson = whoIam.dump();;
 
 	std::unique_ptr<IOBuffItem> obf(new IOBuffItem);
 	obf->setData(CMD_IAMSERV_REQ, ++m_seqid, whoIamJson.c_str(), whoIamJson.length());

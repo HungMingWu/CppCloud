@@ -100,15 +100,12 @@ int CliBase::getIntProperty( const string& key ) const
 	return atoi(getProperty(key).c_str());
 }
 
-int CliBase::serialize( string& outstr ) const
+nlohmann::json CliBase::serialize() const
 {
-	auto it = m_cliProp.begin();
-	for (; it != m_cliProp.end(); ++it)
-	{
-		StrParse::PutOneJson(outstr, it->first, it->second, true);
-	}
-
-	return 0;
+	nlohmann::json obj;
+	for (auto it = m_cliProp.begin(); it != m_cliProp.end(); ++it)
+		obj[it->first] = it->second;
+	return obj;
 }
 
 int CliBase::unserialize( const Value* rpJsonValue )

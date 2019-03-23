@@ -9,6 +9,7 @@ Modification :
 #ifndef _ACT_MGR_H_
 #define _ACT_MGR_H_
 #include "comm/public.h"
+#include "comm/json.hpp"
 #include <cstdarg>
 #include <map>
 #include <list>
@@ -30,14 +31,13 @@ public:
 
 public:
     // 获取连接中的客户端属性信息
-    int pickupCliProfile( std::string& json, int svrid, const std::string& key );
+    std::vector<nlohmann::json> pickupCliProfile(int svrid, const std::string& key);
     // 获取已掉线的客户信息
-    int pickupCliCloseLog( std::string& json );
+    std::vector<std::string> pickupCliCloseLog();
     // 获取客户行为日志信息
-    int pickupCliOpLog( std::string& json, int nSize );
+    std::vector<std::string> pickupCliOpLog(int nSize);
     // 获取所有告警状态的客户机信息
-    int pickupWarnCliProfile( std::string& json, const std::string& filter_key, const std::string& filter_val );
-
+    std::vector<nlohmann::json> pickupWarnCliProfile(const std::string& filter_key, const std::string& filter_val);
 
     int appCloseFound( CliBase* son, int clitype, const CliInfo& cliinfo );
     void setCloseLog( int svrid, const std::string& cloLog );
@@ -48,8 +48,7 @@ public:
     void clearWarnMsg( const std::string& taskkey );
 
 private:
-    void getJsonProp( CliBase* cli, std::string& outj, const std::string& key );
-
+    nlohmann::json getJsonProp(CliBase* cli, const std::string& key);
 private:
     Actmgr(void);
     ~Actmgr(void);

@@ -36,10 +36,9 @@ private:
 	ServiceProvider* getProviderPtr( const std::string& regname ) const;
 	bool hasProviderItem( CliBase* cli, const std::string& regname, int prvdid ) const;
 
-	int getAllJson( std::string& strjson ) const;
-	int getOneProviderJson( std::string& strjson, const std::string& regname ) const;
-	int getOneProviderJson( std::string& strjson, const std::string& regname, short idc, short rack, short version, short limit ) const;
-
+	nlohmann::json getAllJson() const;
+	nlohmann::json getOneProviderJson(const std::string& regname) const;
+	std::vector<nlohmann::json> getOneProviderJson(const std::string& regname, short idc, short rack, short version, short limit) const;
 	// 服务提供者退出或禁用，通知各订阅过服务的消费者
 	void notify2Invoker( const std::string& regname, int svrid, int prvdid );
 	// 注册或设备服务提供者的属性

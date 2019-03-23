@@ -12,6 +12,7 @@ Modification :
 #include <string>
 #include <map>
 #include "comm/public.h"
+#include "comm/json.hpp"
 #include "rapidjson/json.hpp"
 
 class IOHand;
@@ -42,7 +43,7 @@ public:
 	void uninit( void );
 
 	int query( std::string& result, const std::string& file_pattern, const std::string& key_pattern, bool incBase ) const;
-	std::string getAllCfgNameJson( int filter_flag = 2 ) const;
+	nlohmann::json getAllCfgNameJson( int filter_flag = 2 ) const;
 	int getCfgMtime( const std::string& file_pattern, bool incBase ) const;
 
 	// 分布式配置互相同步最新配置

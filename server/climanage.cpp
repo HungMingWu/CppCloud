@@ -193,14 +193,10 @@ std::string CliMgr::getLocalClisEraString( void )
 	return ret;
 }
 
-
-int CliMgr::getLocalCliJsonByDiffera( std::string& jstr, const std::string& differa )
+std::vector<nlohmann::json> CliMgr::getLocalCliJsonByDiffera(const std::string& differa)
 {
-	int ret = 0;
-	int i = 0;
+	std::vector<nlohmann::json> result;
 
-	jstr += "[";
-	
 	vector<std::string> vecitem;
 	StrParse::SpliteStr(vecitem, differa, ' ');
 	for (auto itim = vecitem.begin(); itim != vecitem.end(); ++itim)
@@ -213,53 +209,31 @@ int CliMgr::getLocalCliJsonByDiffera( std::string& jstr, const std::string& diff
 			//int svrera = atoi(vecsvr[1].c_str());
 			//int svratime = atoi(vecsvr[2].c_str());
 
-			CliBase* ptr = getChildByName(svrid+"_I");
+			CliBase* ptr = getChildByName(svrid + "_I");
 			if (ptr)
 			{
-				if (i > 0) jstr += ",";
-				jstr += "{";
-				ptr->serialize(jstr);
-				StrParse::PutOneJson(jstr, "ERAN", ptr->m_era,false);
-				//StrParse::Format("%s:%d:%d ", ptr->getProperty(CONNTERID_KEY).c_str(), 
-				//	ptr->m_era, ptr->getProperty("atime").c_str()), false); // 无逗号结束
-				jstr += "}";
-				++i;
-				++ret;
+				result.push_back(ptr->serialize());
+				result.back()["ERAN"] = ptr->m_era;
 			}
 		}
 	}
-
-	jstr += "]";
-	return ret;	
+	return result;
 }
 
-int CliMgr::getLocalAllCliJson( std::string& jstr )
+std::vector<nlohmann::json> CliMgr::getLocalAllCliJson()
 {
-	int ret = 0;
-
-	jstr += "[";
-	map<CliBase*, CliInfo>::iterator it = m_children.begin();
-	for (int i = 0; it != m_children.end(); ++it)
+	std::vector<nlohmann::json> result;
+	for (auto it = m_children.begin(); it != m_children.end(); ++it)
 	{
 		CliBase* ptr = it->first;
 		if (ptr->isLocal() && ptr->getCliType() > 1)
 		{
-			if (i > 0) jstr += ",";
-			jstr += "{";
-			ptr->serialize(jstr);
-			StrParse::PutOneJson(jstr, "ERAN", ptr->m_era, false);
-			//StrParse::PutOneJson(jstr, "ERAN", 
-			//StrParse::Format("%s:%d:%d ", 
-			//	ptr->getProperty(CONNTERID_KEY).c_str(), 
-			//	ptr->m_era, it->second.t1), false); // 无逗号结束
-			jstr += "}";
-			++i;
-			++ret;
+			result.push_back(ptr->serialize());
+			result.back()["ERAN"] = ptr->m_era;
 		}
 	}
-	jstr += "]";
 
-	return ret;
+	return result;
 }
 
 void CliMgr::updateCliTime( CliBase* child )

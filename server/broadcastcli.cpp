@@ -11,6 +11,7 @@
 #include "cloud/exception.h"
 #include "hocfg_mgr.h"
 #include "provider_manage.h"
+#include "comm/json.hpp"
 
 HEPCLASS_IMPL_FUNCX_BEG(BroadCastCli)
 HEPCLASS_IMPL_FUNCX_MORE_S(BroadCastCli, TransToAllPeer)
@@ -56,17 +57,17 @@ int BroadCastCli::qrun( int flag, long p2 )
     if (HEFG_PEXIT != flag)
     {
         string localEra = CliMgr::Instance()->getLocalClisEraString(); // 获取本地cli的当前版本
-        string hocfgEraJson = HocfgMgr::Instance()->getAllCfgNameJson();
+        string hocfgEraJson = HocfgMgr::Instance()->getAllCfgNameJson().dump();
 
         DEBUG_TRACE("2. broadcast self cliera out, local_erastr=%s", localEra.c_str());
         //if (!localEra.empty())
         {
             //ret = toWorld(s_my_svrid, 1, localEra, " ", "");
-            string reqmsg("{");
-            StrParse::PutOneJson(reqmsg, CLIS_ERASTRING_KEY, localEra, true);
-            StrParse::AppendFormat(reqmsg, "\"%s\":", HOCFG_ERASTRING_KEY);
-            reqmsg += hocfgEraJson;
-            reqmsg += "}";
+            nlohmann::json obj {
+		{CLIS_ERASTRING_KEY, localEra},
+		{HOCFG_ERASTRING_KEY, HocfgMgr::Instance()->getAllCfgNameJson()}
+            };
+            std::string reqmsg = obj.dump();
             ret = toWorld(reqmsg, CMD_BROADCAST_REQ, ++m_seqid, false);
         }
 
@@ -417,17 +418,15 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
     if (!differa.empty() && now > last_reqera_time + reqall_interval_sec)
     {
         // 请求获取某Serv下的所有cli (CMD_CLIERA_REQ)
-        string msgbody;
-
-        msgbody += "{";
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_TO, osvrid, true);
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_FROM, s_my_svrid, true);
-        StrParse::PutOneJson(msgbody, "differa", differa, true);
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_JUMP, 1, true);
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_REFPATH, routepath, true); // 参考路线
-        StrParse::PutOneJson(msgbody, ROUTE_MSG_KEY_TRAIL, std::to_string(s_my_svrid)+">", false); // 已经过的路线
-        msgbody += "}";
-
+        nlohmann::json obj {
+		{ROUTE_MSG_KEY_TO, osvrid},
+		{ROUTE_MSG_KEY_FROM, s_my_svrid},
+		{"differa", differa},
+		{ROUTE_MSG_KEY_JUMP, 1},
+		{ROUTE_MSG_KEY_REFPATH, routepath},
+		{ROUTE_MSG_KEY_TRAIL, std::to_string(s_my_svrid) + ">"}
+        };
+        std::string msgbody = obj.dump();
         ret = iohand->sendData(CMD_CLIERA_REQ, seqid, msgbody.c_str(), msgbody.size(), true);
         servptr->setIntProperty(LAST_REQ_SERVMTIME, now);
         LOGDEBUG("REQERAALL| msg=Serv-%d need %d eraall data| erastr=%s->%s| differa=%s| refpath=%s| retsend=%d", 
@@ -472,27 +471,18 @@ int BroadCastCli::on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned 
 
 
     bool bAll = (0 == differa.compare("all"));
-    string rspbody = "{";
-    StrParse::PutOneJson(rspbody, ROUTE_MSG_KEY_TO, from, true);
-    StrParse::PutOneJson(rspbody, ROUTE_MSG_KEY_FROM, s_my_svrid, true);
-    StrParse::PutOneJson(rspbody, ROUTE_MSG_KEY_REFPATH, refpath, true);
-    StrParse::PutOneJson(rspbody, ROUTE_MSG_KEY_TRAIL, StrParse::Format("%d>", s_my_svrid), true);
-    StrParse::PutOneJson(rspbody, "all", bAll?1:0, true);
-
-    rspbody += "\"data\":";
-    if (bAll)
-    {
-        ret = CliMgr::Instance()->getLocalAllCliJson(rspbody);
-    }
-    else
-    {
-        ret = CliMgr::Instance()->getLocalCliJsonByDiffera(rspbody, differa);
-    }
-
-    rspbody += ",";
-    StrParse::PutOneJson(rspbody, "datalen", ret, true);
-    StrParse::PutOneJson(rspbody, ROUTE_MSG_KEY_JUMP, 1, false);
-    rspbody += "}";
+    nlohmann::json obj {
+	{ROUTE_MSG_KEY_TO, from},
+	{ROUTE_MSG_KEY_FROM, s_my_svrid},
+	{ROUTE_MSG_KEY_REFPATH, refpath},
+	{ROUTE_MSG_KEY_TRAIL, StrParse::Format("%d>", s_my_svrid)},
+	{"all", bAll ? 1 : 0},
+	{ROUTE_MSG_KEY_JUMP, 1}
+    };
+    auto data_vec = bAll ? CliMgr::Instance()->getLocalAllCliJson() : CliMgr::Instance()->getLocalCliJsonByDiffera(differa);
+    obj["data"] = data_vec;
+    obj["datalen"] = (int)data_vec.size();
+    std::string rspbody = obj.dump();
     iohand->sendData(CMD_CLIERA_RSP, seqid, rspbody.c_str(), rspbody.size(), true);
     DEBUG_TRACE("5. resp to %s: %s", iohand->m_idProfile.c_str(), rspbody.c_str());
     DEBUG_PRINT;

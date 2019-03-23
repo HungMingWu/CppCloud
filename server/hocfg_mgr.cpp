@@ -394,11 +394,12 @@ void HocfgMgr::notifyChange( const std::string& filename, int mtime ) const
     CliBase *cli = NULL;
     vector<CliBase*> vecCli;
 
-    std::string msg("{");
-    StrParse::PutOneJson(msg, "notify", "cfg_change", true);
-    StrParse::PutOneJson(msg, "filename", filename, true);
-    StrParse::PutOneJson(msg, "mtime", mtime, false);
-    msg += "}";
+    nlohmann::json obj {
+	    {"notify", "cfg_change"},
+	    {"filename", filename},
+	    {"mtime", mtime}
+    };
+    std::string msg = obj.dump();
 
     while ((cli = alcr.pop()))
     {
@@ -423,32 +424,27 @@ int HocfgMgr::OnGetAllCfgName( void* ptr, unsigned cmdid, void* param )
     IOBuffItem* iBufItem = (IOBuffItem*)param; 
     unsigned seqid = iBufItem->head()->seqid;
     
-    std::string resp = this->getAllCfgNameJson();
+    std::string resp = getAllCfgNameJson().dump();
     iohand->sendData(CMD_GETCFGNAME_RSP, seqid, resp.c_str(), resp.length(), true);
     return 0;
 }
 
 // param: 0仅返回删除的; 1仅返回存在的; 2全返回(default)
-std::string HocfgMgr::getAllCfgNameJson( int filter_flag /*=2*/ ) const
+nlohmann::json HocfgMgr::getAllCfgNameJson(int filter_flag /*=2*/) const
 {
-    std::string jresult("{");
+	nlohmann::json obj;
 
-    auto itr = m_Allconfig.begin();
-    for (int i=0; itr != m_Allconfig.end(); ++itr)
-    {
-        AppConfig* pcfg = itr->second;
-        int flag0 = pcfg->isDel ? 0 : 1;
+	for (auto itr = m_Allconfig.begin(); itr != m_Allconfig.end(); ++itr)
+	{
+		AppConfig* pcfg = itr->second;
+		int flag0 = pcfg->isDel ? 0 : 1;
 
-        if (2 == filter_flag || flag0 == filter_flag)
-        {
-            if (i > 0) jresult += ",";
-            StrParse::AppendFormat(jresult, "\"%s\":[%d,%d]", itr->first.c_str(), flag0, pcfg->mtime);
-            ++i;
-        }
-    }
-
-    jresult += "}";
-    return jresult;
+		if (2 == filter_flag || flag0 == filter_flag)
+		{
+			obj[itr->first] = std::vector<int64_t>{ flag0, pcfg->mtime };
+		}
+	}
+	return obj;
 }
 
 void HocfgMgr::remove( const std::string& cfgname, time_t mtime )
@@ -552,12 +548,13 @@ int HocfgMgr::OnCMD_HOCFGNEW_REQ( void* ptr, unsigned cmdid, void* param )
             if (NULL == pcfg) continue;
 
             // 响应对应于 HocfgMgr::OnSetConfigHandle 消费
-            std::string msgrsp("{");
-            StrParse::PutOneJson(msgrsp, "callby", "cfg_newer", true);
-            StrParse::PutOneJson(msgrsp, "filename", fname, true);
-            StrParse::PutOneJson(msgrsp, "mtime", pcfg->mtime, true);
-            msgrsp += std::string("\"contents\":") + Rjson::ToString(&pcfg->doc);
-            msgrsp += "}";
+            nlohmann::json obj {
+		    {"callby", "cfg_newer"},
+		    {"filename", fname},
+		    {"mtime", pcfg->mtime},
+		    {"contents", Rjson::ToString(&pcfg->doc)}
+	    };
+	    std::string msgrsp = obj.dump();
 
             fs += fname + " ";
             ret = RouteExchage::PostToCli(msgrsp, CMD_SETCONFIG2_REQ, seqid, from);

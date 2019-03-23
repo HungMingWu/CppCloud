@@ -20,8 +20,6 @@ HEPCLASS_IMPL_FUNCX_MORE_S(BegnHand, on_CMD_KEEPALIVE_REQ)
 HEPCLASS_IMPL_FUNCX_MORE_S(BegnHand, on_CMD_KEEPALIVE_RSP)
 HEPCLASS_IMPL_FUNCX_END(BegnHand)
 
-static const char g_resp_strbeg[] = "{ \"code\": 0, \"desc\": \"success\", \"data\": ";
-
 static int ss_svrid_gen = 1000;
 const char s_app_cache_id[] = "3";
 const char s_scommid_key[] = "scomm_svrid_max";
@@ -170,14 +168,16 @@ int BegnHand::on_CMD_WHOAMI_REQ( IOHand* iohand, const Value* doc, unsigned seqi
 
 
 	whoamiFinish(iohand, first);
+	nlohmann::json obj {
+		{"code", 0},
+		{"svrid", svrid}
+	};
 	string maincfg = iohand->getProperty(HOCFG_CLI_MAINCONF_KEY);
-	string optstr;
 	if (!maincfg.empty()) // 如果配置了客户的mainconf，则返回
 	{
-		StrParse::PutOneJson(optstr, "mconf", maincfg, true);
+		obj["mconf"] = maincfg;
 	}
-
-	ret = SendMsg(iohand, CMD_WHOAMI_RSP, seqid, true, "{ \"code\": 0, %s \"svrid\": %d }", optstr.c_str(), svrid);
+	ret = SendMsg(iohand, CMD_WHOAMI_RSP, seqid, true, obj.dump().c_str());
 	LOGDEBUG("CMD_WHOAMI_REQ| req=%s| svrid=%d| seqid=%d sndret=%d", str.c_str(), svrid, seqid, ret);
 
 	return ret;
@@ -190,10 +190,12 @@ int BegnHand::whoamiFinish( IOHand* ioh, bool first )
 	HocfgMgr::Instance()->setupPropByServConfig(ioh);
 	
 	// 广播客户上线
-	string msgbody = _F("{\"%s\":[{", UPDATE_CLIPROP_UPKEY);
-	ioh->serialize(msgbody);
-	StrParse::PutOneJson(msgbody, "ERAN", ioh->m_era, false); // 无逗号结束
-	msgbody += "}]}";
+	auto serialobj = ioh->serialize();
+	serialobj["ERAN"] = ioh->m_era;
+	nlohmann::json obj {
+		{UPDATE_CLIPROP_UPKEY, {serialobj}}
+	};
+	std::string msgbody = obj.dump();
 
 	return BroadCastCli::Instance()->toWorld(msgbody, CMD_UPDATEERA_REQ, 0, false);
 }
@@ -206,9 +208,13 @@ int BegnHand::on_CMD_HUNGUP_REQ( IOHand* iohand, const Value* doc, unsigned seqi
 
 	if ("get" == op) // 获取hung机信息
 	{
-		string json = g_resp_strbeg;
-		Actmgr::Instance()->pickupCliCloseLog(json);
-		json += "}";
+		auto logs = Actmgr::Instance()->pickupCliCloseLog();
+		nlohmann::json obj {
+			{"code", 0},
+			{"desc", "success"},
+			{"data", logs}
+		};
+		string json = obj.dump();
 		ret = SendMsg(iohand, CMD_HUNGUP_RSP, seqid, json, true);
 	}
 	else if ("set" == op) // 清除hung

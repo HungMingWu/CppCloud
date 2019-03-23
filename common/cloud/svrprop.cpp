@@ -1,5 +1,6 @@
 #include "svrprop.h"
 #include "comm/strparse.h"
+#include "comm/json.hpp"
 
 SvrProp::SvrProp( void ): svrid(0), prvdid(0), tmpnum(0),
 	 protocol(0),version(0), weight(0), idc(0), rack(0), islocal(false), enable(false)
@@ -14,22 +15,18 @@ bool SvrProp::valid( void ) const
 
 string SvrProp::jsonStr( void ) const
 {
-	string strjson;
-	strjson.append("{");
-	StrParse::PutOneJson(strjson, "regname", regname, true);
-	StrParse::PutOneJson(strjson, "url", url, true);
-	if(!desc.empty()>0) StrParse::PutOneJson(strjson, "desc", desc, true);
-	if(svrid>0) StrParse::PutOneJson(strjson, "svrid", svrid, true);
-	if(prvdid>0) StrParse::PutOneJson(strjson, "prvdid", prvdid, true);
-
-	StrParse::PutOneJson(strjson, "protocol", protocol, true);
-	StrParse::PutOneJson(strjson, "version", version, true);
-	// 权重，当服务消费应用调用时，weight=匹配分数值
-	if(weight>0) StrParse::PutOneJson(strjson, "weight", weight, true);
-	if(idc>0) StrParse::PutOneJson(strjson, "idc", idc, true);
-	if(rack>0) StrParse::PutOneJson(strjson, "rack", rack, true);
- 	StrParse::PutOneJson(strjson, "enable", enable, false);
-	strjson.append("}");
-
-	return strjson;
+	nlohmann::json obj {
+		{"regname", regname},
+		{"url", url},
+		{"protocol", protocol},
+		{"version", version},
+		{"enable", enable}
+	};
+	if (!desc.empty()) obj["desc"] = desc;
+	if (svrid > 0) obj["svrid"] = svrid;
+	if (prvdid > 0) obj["prvdid"] = prvdid;
+	if (weight > 0) obj["weight"] = weight;
+	if (idc > 0) obj["idc"] =  idc;
+	if (rack > 0) obj["rack"] = rack;
+	return obj.dump();
 }

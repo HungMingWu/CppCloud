@@ -13,9 +13,6 @@ Modification :
 #include <list>
 #include <string>
 
-using std::map;
-using std::list;
-
 class Listen: public HEpBase
 {
 public:

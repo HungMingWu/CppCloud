@@ -25,9 +25,6 @@ public:
     static int SplitURL(std::string& proto, std::string& host, int& port, std::string& path, std::string& qparam, const std::string& url);
     // 简单json解析, src全部转化成小写处理;
     static int PickOneJson(std::string& ostr, const std::string& src, const std::string& name);
-    // 加入json中一项数据
-    static bool PutOneJson(std::string& jstr, const std::string& jkey, const std::string& jvalue, bool comma_end = false);
-    static bool PutOneJson(std::string& jstr, const std::string& jkey, int jval, bool comma_end = false);
 
     // 处理路径尾部字符
 	static void AdjustPath(std::string& path, bool useend, char dv = '/');

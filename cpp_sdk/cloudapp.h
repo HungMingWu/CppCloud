@@ -12,6 +12,7 @@ Modification :
 #include "comm/public.h"
 #include "iohand.h"
 #include "synchand.h"
+#include "comm/json.hpp"
 
 using NotifyCBFunc = std::function<int(void*)>;
 
@@ -69,7 +70,7 @@ private:
 	int appendTimerq( void );
 
 	int onNotifyShellCmd( string& outtxt, int cmdid) const;
-	int _notifyHandle( string& resp, int& code, const string& notify, const void* doc );
+	int _notifyHandle( nlohmann::json& obj, int& code, const string& notify, const void* doc );
 
 
 private:

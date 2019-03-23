@@ -7,6 +7,7 @@
 #include "cloud/switchhand.h"
 #include "svr_stat.h"
 #include "cloudapp.h"
+#include "comm/json.hpp"
 
 void SvrConsumer::SvrItem::rmBySvrid( int svrid, int prvdid )
 {
@@ -131,15 +132,15 @@ int SvrConsumer::init( const string& svrList )
         StrParse::SpliteStr(vSvrNver, *cit, seperator2);
 
         const string& svrname = vSvrNver[0];
-        string verStr;
-        if (2 == vSvrNver.size())
-        {
-            StrParse::PutOneJson(verStr, "version", atoi(vSvrNver[1].c_str()), true);
-        }
+        nlohmann::json obj {
+		{"regname", svrname},
+		{"version", atoi(vSvrNver[1].c_str())},
+		{"bookchange", 1}
+        };
 
         string resp;
         ret = CloudApp::Instance()->begnRequest(resp, CMD_SVRSEARCH_REQ, 
-                _F("{\"regname\": \"%s\", %s \"bookchange\": 1}", svrname.c_str(), verStr.c_str()), 
+                obj.dump(),
                 false); 
         IFBREAK(ret);
 

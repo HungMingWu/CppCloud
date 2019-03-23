@@ -11,7 +11,6 @@ Modification :
 #include <map>
 #include <iostream>
 
-using std::map;
 static const string appName = "AgentPrvd";
 static const string confFile = "agent_prvd.json";
 

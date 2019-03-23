@@ -57,29 +57,23 @@ int ServiceItem::parse( CliBase* cli )
 	return 0;
 }
 
-void ServiceItem::getJsonStr( std::string& strjson, int oweight ) const
+nlohmann::json ServiceItem::getJsonStr(int oweight) const
 {
-	strjson.append("{");
-	StrParse::PutOneJson(strjson, "regname", regname, true);
-	StrParse::PutOneJson(strjson, "url", url, true);
-	StrParse::PutOneJson(strjson, "desc", desc, true);
-	StrParse::PutOneJson(strjson, "svrid", svrid, true);
-	StrParse::PutOneJson(strjson, "prvdid", prvdid, true);
-	StrParse::PutOneJson(strjson, "pvd_ok", pvd_ok, true);
-	StrParse::PutOneJson(strjson, "pvd_ng", pvd_ng, true);
-	StrParse::PutOneJson(strjson, "protocol", protocol, true);
-	StrParse::PutOneJson(strjson, "version", version, true);
-	// 权重，当服务消费应用调用时，weight=匹配分数值
-	StrParse::PutOneJson(strjson, "weight", oweight>0? oweight: weight, true);
-	StrParse::PutOneJson(strjson, "idc", idc, true);
-	StrParse::PutOneJson(strjson, "rack", rack, true);
-	StrParse::PutOneJson(strjson, "enable", enable, false);
-	strjson.append("}");
-}
-
-void ServiceItem::getCalcJson( std::string& strjson, int oweight ) const
-{
-	getJsonStr(strjson, oweight);
+	return {
+		{"regname", regname},
+		{"url", url},
+		{"desc", desc},
+		{"svrid", svrid},
+		{"prvdid", prvdid},
+		{"pvd_ok", pvd_ok},
+		{"pvd_ng", pvd_ng},
+		{"protocol", protocol},
+		{"version", version},
+		{"idc", idc},
+		{"rack", rack},
+		{"enable", enable},
+		{"weight", oweight > 0 ? oweight : weight}
+	};
 }
 
 int ServiceItem::score( short oidc, short orack ) const
@@ -205,23 +199,13 @@ bool ServiceProvider::removeItme( CliBase* cli )
 }
 
 // 返回json-array[]形式
-int ServiceProvider::getAllJson( std::string& strjson ) const
+std::vector<nlohmann::json> ServiceProvider::getAllJson() const
 {
-	strjson.append("[");
-	int i = 0;
-
+	std::vector<nlohmann::json> result;
 	for (auto itr : m_svrItems)
-	{
 		for (auto itMap : itr.second)
-		{
-			if (i > 0) strjson.append(",");
-			itMap.second->getJsonStr(strjson);
-			++i;
-		}
-	}
-
-	strjson.append("]");
-	return i;
+			result.push_back(itMap.second->getJsonStr());
+	return result;
 }
 
 /**
@@ -230,7 +214,7 @@ int ServiceProvider::getAllJson( std::string& strjson ) const
  * @return: 返回可用服务个数
  * @param: strjson [out] 返回json字符串[array格式]
  **/
-int ServiceProvider::query( std::string& strjson, short idc, short rack, short version, short limit ) const
+std::vector<nlohmann::json> ServiceProvider::query(short idc, short rack, short version, short limit) const
 {
 	// sort all item by score
 	std::map<int, ServiceItem*> sortItemMap;
@@ -249,21 +233,18 @@ int ServiceProvider::query( std::string& strjson, short idc, short rack, short v
 			{
 				score++;
 			}
-			sortItemMap[score] = ptr;			
+			sortItemMap[score] = ptr;
 		}
 
 	}
-	
-	short count = 0;
-	strjson.append("[");
+
+	std::vector<nlohmann::json> result;
 	auto ritr = sortItemMap.rbegin();
-	for (; count < limit && sortItemMap.rend() != ritr; ++ritr, ++count)
+	for (; result.size() < limit && sortItemMap.rend() != ritr; ++ritr)
 	{
 		ServiceItem* ptr = ritr->second;
-		if (count > 0) strjson.append(",");
-		ptr->getCalcJson(strjson, ptr->tmpnum);
+		result.push_back(ptr->getJsonStr(ptr->tmpnum));
 	}
-	strjson.append("]");
-	
-	return count;
+
+	return result;
 }

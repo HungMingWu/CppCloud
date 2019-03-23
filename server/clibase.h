@@ -13,6 +13,7 @@ Modification :
 #include "comm/queue.h"
 #include "rapidjson/json.hpp"
 #include "cloud/iobuff.h"
+#include "comm/json.hpp"
 
 class CliBase: public HEpBase
 {
@@ -43,7 +44,7 @@ public: // interface HEpBase
 	bool isLocal(void) const { return m_isLocal; }
 	//bool isOutObj(void) const { return m_outObj; }
 
-	int serialize( string& outstr ) const;
+	nlohmann::json serialize() const;
 	int unserialize( const Value* rpJsonValue );
 
 protected:

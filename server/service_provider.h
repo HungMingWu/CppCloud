@@ -11,6 +11,7 @@ Modification :
 #include <string>
 #include <map>
 #include "cloud/svrprop.h"
+#include "comm/json.hpp"
 
 class CliBase;
 
@@ -25,9 +26,7 @@ struct ServiceItem : public SvrProp
 
 	int parse0( const std::string& name, CliBase* cli, int prvdid );
 	int parse( CliBase* cli );
-	void getJsonStr( std::string& strjson, int oweight = 0 ) const;
-	void getCalcJson( std::string& strjson , int oweight) const;
-
+	nlohmann::json getJsonStr(int oweight = 0) const;
 	int score( short idc, short rack ) const;
 };
 
@@ -46,9 +45,8 @@ public:
 	bool removeItme( CliBase* cli );
 
 	// 计算返回可用服务
-	int query( std::string& jstr, short idc, short rack, short version, short limit ) const;
-	int getAllJson( std::string& strjson ) const;
-
+	std::vector<nlohmann::json> query(short idc, short rack, short version, short limit) const;
+	std::vector<nlohmann::json> getAllJson() const;
 private:
 
 private:

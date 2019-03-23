@@ -239,13 +239,14 @@ int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 		rack = iohand->getIntProperty("rack");
 	}
 
-	std::string resp("{\"data\": ");
-	int ret = this->getOneProviderJson(resp, regname, idc, rack, version, limit);
-	resp.append(",");
-	StrParse::PutOneJson(resp, "count", ret, true);
-	StrParse::PutOneJson(resp, "desc", _F("total resp %d providers", ret), true);
-	StrParse::PutOneJson(resp, "code", 0, false);
-	resp.append("}");
+	auto vec = getOneProviderJson(regname, idc, rack, version, limit);
+	nlohmann::json obj{
+		{"data", vec},
+		{"count", (int)vec.size()},
+		{"desc", _F("total resp %d providers", vec.size())},
+		{"code", 0}
+	};
+	std::string resp = obj.dump();
 
 	if (bookchange) // 订阅改变事件（cli下线）
 	{
@@ -262,18 +263,14 @@ int ProviderMgr::OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param )
     MSGHANDLE_PARSEHEAD(false);
 	RJSON_GETSTR_D(regname, &doc);
 	//RJSON_GETINT_D(onlyname, &doc);
-
-	bool ball = (regname.empty() || "all" == regname);
-	int count = 0;
-	std::string resp("{");
-
-	resp.append("\"data\":");
-	count = ball? this->getAllJson(resp) : this->getOneProviderJson(resp, regname);
-	resp.append(",");
-	StrParse::PutOneJson(resp, "len", count, false);
-	resp.append("}");
-
-	return iohand->sendData(CMD_SVRSHOW_RSP, seqid, resp.c_str(), resp.length(), true);
+    bool ball = (regname.empty() || "all" == regname);
+    auto vec = ball ? getAllJson() : getOneProviderJson(regname);
+    nlohmann::json obj {
+		{"data", vec},
+		{"len", (int)vec.size()}
+    };
+    std::string resp = obj.dump();
+    return iohand->sendData(CMD_SVRSHOW_RSP, seqid, resp.c_str(), resp.length(), true);
 }
 
 // format: [{"prvdid": 1, "pvd_ok": 10}]
@@ -356,50 +353,33 @@ bool ProviderMgr::hasProviderItem( CliBase* cli, const std::string& regname, int
 }
 
 // return provider个数
-int ProviderMgr::getAllJson( std::string& strjson ) const
+nlohmann::json ProviderMgr::getAllJson() const
 {
-	int count = 0;
-	strjson.append("{");
-	auto itr = m_providers.begin();
-	for (; itr != m_providers.end(); ++itr)
-	{
-		if (count > 0) strjson.append(",");
-		strjson.append(_F("\"%s\":", itr->first.c_str()));
-		itr->second->getAllJson(strjson);
-		++count;
-	}
-	strjson.append("}");
-	return count;
+	nlohmann::json obj;
+	for (auto itr = m_providers.begin(); itr != m_providers.end(); ++itr)
+		obj[itr->first] = itr->second->getAllJson();
+	return obj;
 }
 
 // return item个数
-int ProviderMgr::getOneProviderJson( std::string& strjson, const std::string& regname ) const
+nlohmann::json ProviderMgr::getOneProviderJson(const std::string& regname) const
 {
-	int count = 0;
-	strjson.append("{");
 	auto itr = m_providers.find(regname);
 	if (itr != m_providers.end())
-	{
-		strjson.append(_F("\"%s\":", itr->first.c_str()));
-		itr->second->getAllJson(strjson);
-		count = 1;
-	}
-	strjson.append("}");
-	return count;
+		return { itr->first, itr->second->getAllJson() };
+	return {};
 }
+
 // return item个数
-int ProviderMgr::getOneProviderJson( std::string& strjson, const std::string& regname, short idc, short rack, short version, short limit ) const
+std::vector<nlohmann::json> ProviderMgr::getOneProviderJson(const std::string& regname, short idc, short rack, short version, short limit) const
 {
-	int count = 0;
 	auto itr = m_providers.find(regname);
 	if (itr != m_providers.end() && limit > 0)
 	{
-		count = itr->second->query(strjson, idc, rack, version, limit);
+		return itr->second->query(idc, rack, version, limit);
 	}
 	else
 	{
-		strjson.append("[]");
+		return {};
 	}
-
-	return count;
 }

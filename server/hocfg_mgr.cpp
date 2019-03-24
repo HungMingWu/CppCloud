@@ -503,23 +503,19 @@ int HocfgMgr::save2File(const std::string& filename, const std::string &doc) con
 
 // 对比来自其他节点上的配置, 若本地过旧,则请求更新
 // 触发自CMD_BROADCAST_REQ
-int HocfgMgr::compareServHoCfg( int fromSvrid, const Value* jdoc )
+int HocfgMgr::compareServHoCfg( int fromSvrid, const nlohmann::json &jdoc )
 {
-    ERRLOG_IF1RET_N(!jdoc->IsObject(), -50, "HOCFGCMP| msg=cfgera isnot jobject| ");
+    ERRLOG_IF1RET_N(!jdoc.is_object(), -50, "HOCFGCMP| msg=cfgera isnot jobject| ");
 
     int ret = 0;
-    std::string reqmsg("{\"data\":[");
-    int count = 0;
-    Value::ConstMemberIterator itr = jdoc->MemberBegin();
-    for (; itr != jdoc->MemberEnd(); ++itr)
+    std::vector<std::string> datas;
+    for (const auto &[key, value] : jdoc.items())
     {
-        const char* key = itr->name.GetString();
-        ERRLOG_IF0BRK(itr->value.IsArray() && 2 == itr->value.Size(), -51, 
-            "HOCFGCMP| msg=item not array| fromSvrid=%d| jdoc=%s", fromSvrid, Rjson::ToString(jdoc).c_str());
-        int existFlag = 0;
-        int omtime = 0;
-        Rjson::GetInt(existFlag, 0, &itr->value);
-        Rjson::GetInt(omtime, 1, &itr->value);
+        ERRLOG_IF0BRK(value.is_array() && 2 == value.size(), -51,
+            "HOCFGCMP| msg=item not array| fromSvrid=%d| jdoc=%s", fromSvrid, jdoc.dump().c_str());
+
+        int existFlag = value[0];
+        int omtime = value[1];
 
         AppConfig* appcfg = getConfigByName(key);
         if (NULL == appcfg || appcfg->mtime < omtime)
@@ -530,14 +526,12 @@ int HocfgMgr::compareServHoCfg( int fromSvrid, const Value* jdoc )
             }
             else
             {
-                if (count > 0) reqmsg += ",";
-                reqmsg += std::string("\"") + key + "\"";
-                ++count;
+                datas.push_back(key);
             }
         }
     }
-    reqmsg += "]}";
-    ret = count>0 ? RouteExchage::PostToCli(reqmsg, CMD_HOCFGNEW_REQ, ++m_seqid, fromSvrid) : 0;
+    nlohmann::json obj{ {"data", datas} };
+    ret = (datas.size()) > 0 ? RouteExchage::PostToCli(obj.dump(), CMD_HOCFGNEW_REQ, ++m_seqid, fromSvrid) : 0;
     
     return ret;
 }

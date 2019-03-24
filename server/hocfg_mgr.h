@@ -47,7 +47,7 @@ public:
 	int getCfgMtime( const std::string& file_pattern, bool incBase ) const;
 
 	// 分布式配置互相同步最新配置
-	int compareServHoCfg( int fromSvrid, const Value* jdoc );
+	int compareServHoCfg(int fromSvrid, const nlohmann::json &jdoc);
 	// cli初始时根据配置做一些自定制属性
 	int setupPropByServConfig( IOHand* iohand ) const;
 

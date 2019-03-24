@@ -11,7 +11,6 @@ Modification :
 #include "comm/hep_base.h"
 #include "rapidjson/json.hpp"
 #include "comm/json.hpp"
-
 class CliBase;
 class IOHand;
 
@@ -26,10 +25,10 @@ public:
 public:
     static int OnBroadCMD( void* ptr, unsigned cmdid, void* param );
     static int TransToAllPeer( void* ptr, unsigned cmdid, void* param );
-    static int on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsigned seqid );
-    static int on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned seqid );
-    static int on_CMD_CLIERA_RSP( IOHand* iohand, const Value* doc, unsigned seqid );
-    static int on_CMD_UPDATEERA_REQ( IOHand* iohand, const Value* doc, unsigned seqid );
+    static int on_CMD_BROADCAST_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid);
+    static int on_CMD_CLIERA_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid);
+    static int on_CMD_CLIERA_RSP(IOHand* iohand, const nlohmann::json& obj, unsigned seqid);
+    static int on_CMD_UPDATEERA_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid);
 
     void init( int my_svrid );
     
@@ -46,7 +45,7 @@ protected: // interface IEPollRun
     virtual int qrun( int flag, long p2 );
 
     static string diffOuterCliEra( int servid, const string& erastr );
-    static int UpdateCliProps( const Value* pdatas, int from );
+    static int UpdateCliProps(const nlohmann::json& objs, int from);
     static void AfterUpdatePropsHandle( CliBase* cli );
 
 protected:

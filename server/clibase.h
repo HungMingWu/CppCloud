@@ -30,6 +30,7 @@ public: // interface HEpBase
 
 	// 自定义属性的操作
 	int Json2Map( const Value* objnode );
+	int Json2Map(const nlohmann::json &obj);
     void setProperty( const string& key, const string& val );
     void setProperty( const string& key, int val );
     string getProperty( const string& key ) const;
@@ -46,7 +47,7 @@ public: // interface HEpBase
 
 	nlohmann::json serialize() const;
 	int unserialize( const Value* rpJsonValue );
-
+	int unserialize(const nlohmann::json &obj);
 protected:
 	string m_cliName;
 	int m_cliType; // 何种类型的客户应用: 1 sevr端服务; 10 监控进程; 20 web serv; 30 观察进程; 100 CPP应用； 200 py应用;

@@ -231,14 +231,22 @@ int BroadCastCli::toWorld( const string& jsonmsg, unsigned cmdid, unsigned seqid
 
 int BroadCastCli::OnBroadCMD( void* ptr, unsigned cmdid, void* param )
 {
-    CMDID2FUNCALL_BEGIN
-    LOGDEBUG("BROADCMD| seqid=%u| cmd=0x%x| body=%s", seqid, cmdid, body);
-    CMDID2FUNCALL_CALL(CMD_BROADCAST_REQ)
-    CMDID2FUNCALL_CALL(CMD_CLIERA_REQ)
-    CMDID2FUNCALL_CALL(CMD_CLIERA_RSP)
-    CMDID2FUNCALL_CALL(CMD_UPDATEERA_REQ)
-
-    return -5;
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), "body json invalid " __FILE__);
+	if (cmdid == CMD_BROADCAST_REQ) {
+		return on_CMD_BROADCAST_REQ(ctx.io(), ctx.obj(), ctx.seqid());
+	}
+	else if (cmdid == CMD_CLIERA_REQ) {
+		return on_CMD_CLIERA_REQ(ctx.io(), ctx.obj(), ctx.seqid());
+	}
+	else if (cmdid == CMD_CLIERA_RSP) {
+		return on_CMD_CLIERA_RSP(ctx.io(), ctx.obj(), ctx.seqid());
+	}
+	else if (cmdid == CMD_UPDATEERA_REQ) {
+		return on_CMD_UPDATEERA_REQ(ctx.io(), ctx.obj(), ctx.seqid());
+	}
+	return -5;
 }
 
 // @summery: 比较外面广播过来的erastr和本地outerCli，返回不同的cli编号
@@ -310,7 +318,7 @@ string BroadCastCli::diffOuterCliEra( int servid, const string& erastr )
 	return retall? "all": ret;
 }
 
-int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsigned seqid )
+int BroadCastCli::on_CMD_BROADCAST_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid)
 {
     int ret;
     int osvrid = 0;
@@ -318,15 +326,19 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
     string str_osvrid;
     string excludeSvrid;
     string routepath;
-    
-    ret = Rjson::GetInt(osvrid, BROARDCAST_KEY_FROM, doc);
-    ret |= Rjson::GetStr(erastr, CLIS_ERASTRING_KEY, doc);
-    ret |= Rjson::GetStr(routepath, BROARDCAST_KEY_TRAIL, doc);
+
+    try {
+        osvrid = obj.at(BROARDCAST_KEY_FROM);
+        if (osvrid < 0) throw;
+        erastr = obj.at(CLIS_ERASTRING_KEY);
+        routepath = obj.at(BROARDCAST_KEY_TRAIL);
+    }
+    catch (...) {
+        throw NormalExceptionOn(409, CMD_BROADCAST_RSP, seqid, string("invalid CMD_BROADCAST_REQ body ") + obj.dump());
+    }
+
     str_osvrid = std::to_string(osvrid);
 
-    NormalExceptionOn_IFTRUE(ret||osvrid<=0, 409, CMD_BROADCAST_RSP, seqid, 
-        string("invalid CMD_BROADCAST_REQ body ")+Rjson::ToString(doc));
-    
     DEBUG_TRACE("a. recv svrid=%d broadcast pass by %s, msg=%s", osvrid, iohand->m_idProfile.c_str(), Rjson::ToString(doc).c_str());
     routepath += std::to_string(s_my_svrid);
 
@@ -398,7 +410,7 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
     const int reqall_interval_sec = 10;
 
     // era新旧判断
-    string differa = needall? "all": diffOuterCliEra(osvrid, erastr);
+    string differa = needall ? "all" : diffOuterCliEra(osvrid, erastr);
     if (!differa.empty() && now > last_reqera_time + reqall_interval_sec)
     {
         // 请求获取某Serv下的所有cli (CMD_CLIERA_REQ)
@@ -411,29 +423,28 @@ int BroadCastCli::on_CMD_BROADCAST_REQ( IOHand* iohand, const Value* doc, unsign
 		{ROUTE_MSG_KEY_TRAIL, std::to_string(s_my_svrid) + ">"}
         };
         std::string msgbody = obj.dump();
+
         ret = iohand->sendData(CMD_CLIERA_REQ, seqid, msgbody.c_str(), msgbody.size(), true);
         servptr->setIntProperty(LAST_REQ_SERVMTIME, now);
-        LOGDEBUG("REQERAALL| msg=Serv-%d need %d eraall data| erastr=%s->%s| differa=%s| refpath=%s| retsend=%d", 
+        LOGDEBUG("REQERAALL| msg=Serv-%d need %d eraall data| erastr=%s->%s| differa=%s| refpath=%s| retsend=%d",
             s_my_svrid, osvrid, old_era.c_str(), erastr.c_str(), differa.c_str(), routepath.c_str(), ret);
         DEBUG_TRACE("d. req %d-serv's cli: %s", osvrid, msgbody.c_str());
     }
 
-    const Value* hocfgEra = NULL;
-    if (0 == Rjson::GetValue(&hocfgEra, HOCFG_ERASTRING_KEY, doc))
+    if (obj.find(HOCFG_ERASTRING_KEY) != obj.end())
     {
-        ret = HocfgMgr::Instance()->compareServHoCfg(osvrid, hocfgEra);
+        ret = HocfgMgr::Instance()->compareServHoCfg(osvrid, obj.at(HOCFG_ERASTRING_KEY));
     }
 
     return ret;
 }
-
 
 /**
  * 协议格式:
  * {"to": 123, "from": 234, "differa": "xxx", "refer_path": "xxx", "path": "xx"}
  *
 **/
-int BroadCastCli::on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned seqid )
+int BroadCastCli::on_CMD_CLIERA_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid)
 {
     int ret = 0;
     int from = 0;
@@ -443,19 +454,24 @@ int BroadCastCli::on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned 
     string refpath;
     string actpath;
 
-    ret |= Rjson::GetInt(to, ROUTE_MSG_KEY_TO, doc);
-    ret |= Rjson::GetInt(from, ROUTE_MSG_KEY_FROM, doc);
-    ret |= Rjson::GetStr(differa, "differa", doc);
-    ret |= Rjson::GetStr(refpath, ROUTE_MSG_KEY_REFPATH, doc);
-    ret |= Rjson::GetStr(actpath, ROUTE_MSG_KEY_TRAIL, doc);
+    try {
+        to = obj.at(ROUTE_MSG_KEY_TO);
+        from = obj.at(ROUTE_MSG_KEY_FROM);
+        differa = obj.at("differa");
+        refpath = obj.at(ROUTE_MSG_KEY_REFPATH);
+        actpath = obj.at(ROUTE_MSG_KEY_TRAIL);
+    }
+    catch (...)
+    {
+        throw RouteExException(cmdid, seqid, s_my_svrid, to,
+              string("leak of param ") + obj.dump(), actpath);
+    }
 
-    RouteExException_IFTRUE_EASY(ret, string("leak of param ")+Rjson::ToString(doc));
-    RouteExException_IFTRUE_EASY(to!=s_my_svrid, string("dst svrid notmatch ")+Rjson::ToString(doc));
+    RouteExException_IFTRUE_EASY(to != s_my_svrid, string("dst svrid notmatch ") + obj.dump());
     DEBUG_TRACE("4. recv %d-serv need CLIERA: %s", from, Rjson::ToString(doc).c_str());
 
-
     bool bAll = (0 == differa.compare("all"));
-    nlohmann::json obj {
+    nlohmann::json obj1 {
 	{ROUTE_MSG_KEY_TO, from},
 	{ROUTE_MSG_KEY_FROM, s_my_svrid},
 	{ROUTE_MSG_KEY_REFPATH, refpath},
@@ -464,9 +480,9 @@ int BroadCastCli::on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned 
 	{ROUTE_MSG_KEY_JUMP, 1}
     };
     auto data_vec = bAll ? CliMgr::Instance()->getLocalAllCliJson() : CliMgr::Instance()->getLocalCliJsonByDiffera(differa);
-    obj["data"] = data_vec;
-    obj["datalen"] = (int)data_vec.size();
-    std::string rspbody = obj.dump();
+    obj1["data"] = data_vec;
+    obj1["datalen"] = (int)data_vec.size();
+    std::string rspbody = obj1.dump();
     iohand->sendData(CMD_CLIERA_RSP, seqid, rspbody.c_str(), rspbody.size(), true);
     DEBUG_TRACE("5. resp to %s: %s", iohand->m_idProfile.c_str(), rspbody.c_str());
     DEBUG_PRINT;
@@ -477,60 +493,61 @@ int BroadCastCli::on_CMD_CLIERA_REQ( IOHand* iohand, const Value* doc, unsigned 
  * 协议格式:
  * {"to": 123, "from": 234, "refer_path": "xxx", "act_path": "xx", "data":[{cli1},{cli2}]}
 **/
-int BroadCastCli::on_CMD_CLIERA_RSP( IOHand* iohand, const Value* doc, unsigned seqid )
+int BroadCastCli::on_CMD_CLIERA_RSP(IOHand* iohand, const nlohmann::json& obj, unsigned seqid)
 {
     int ret = 0;
     int from = 0;
-    const Value* pdatas = NULL;
+    nlohmann::json data;
 
-    ret = Rjson::GetArray(&pdatas, "data", doc);
-    ret |= Rjson::GetInt(from, ROUTE_MSG_KEY_FROM, doc);
-    ERRLOG_IF1RET_N(ret || NULL==pdatas || from <= 0, -30, "CLIERA_RSP| msg=no data(%s)| my_svrid=%d", Rjson::ToString(doc).c_str(), s_my_svrid);
-    DEBUG_TRACE("e. get cliera resp: %s", Rjson::ToString(doc).c_str());
+    try {
+        data = obj.at("data");
+        if (data.empty()) throw;
+        from = obj.at(ROUTE_MSG_KEY_FROM);
+        if (from < 0) throw;
+    }
+    catch (...) {
+	LOGERROR("CLIERA_RSP| msg=no data(%s)| my_svrid=%d", obj.dump().c_str(), s_my_svrid);
+        return -30;
+    }
+    DEBUG_TRACE("e. get cliera resp: %s", obj.dump().c_str());
 
-    return UpdateCliProps(pdatas, from);
+    return UpdateCliProps(data, from);
 }
 
-int BroadCastCli::UpdateCliProps( const Value* pdatas, int from )
+int BroadCastCli::UpdateCliProps(const nlohmann::json& objs, int from)
 {
-    string strappid;
-    const Value* item = NULL;
     int ret = 0;
-    for (int i = 0; 0 == Rjson::GetObject(&item, i, pdatas); ++i)
+    for (const auto &obj : objs)
     {
-        if (!item) break;
-        if (0 == Rjson::GetStr(strappid, CONNTERID_KEY, item))
+        if (obj.find(CONNTERID_KEY) == obj.end()) continue;
+        std::string strappid = obj.at(CONNTERID_KEY);
+        CliBase* cli = CliMgr::Instance()->getChildByName(strappid + "_i");
+        if (cli)
         {
-            CliBase* cli = CliMgr::Instance()->getChildByName(strappid + "_i");
-            if (cli)
-            {
-                ret = cli->unserialize(item);
-            }
-            else
-            {
-                OuterCli* outcli = new OuterCli;
-                outcli->init(from);
-                outcli->unserialize(item);
-                ret = CliMgr::Instance()->addChild(outcli);
-                ret |= CliMgr::Instance()->addAlias2Child(strappid + "_i", outcli);
-                ret |= CliMgr::Instance()->addAlias2Child(_F("%s_%d_%s", OUTERCLI_ALIAS_PREFIX, from, strappid.c_str()), outcli);
-                
-                if (ret) // fail
-                {
-                    LOGERROR("CLIERA_RSP| msg=add child to CliMgr fail| svrid=%d| ret=%d", from, ret);
-                    CliMgr::Instance()->removeAliasChild(outcli, true);
-                    continue;
-                }
-                cli = outcli;
-            }
-
-            AfterUpdatePropsHandle(cli);
+            ret = cli->unserialize(obj);
         }
-    }
+        else
+        {
+            OuterCli* outcli = new OuterCli;
+            outcli->init(from);
+            outcli->unserialize(obj);
+            ret = CliMgr::Instance()->addChild(outcli);
+            ret |= CliMgr::Instance()->addAlias2Child(strappid + "_i", outcli);
+            ret |= CliMgr::Instance()->addAlias2Child(_F("%s_%d_%s", OUTERCLI_ALIAS_PREFIX, from, strappid.c_str()), outcli);
 
+            if (ret) // fail
+            {
+                 LOGERROR("CLIERA_RSP| msg=add child to CliMgr fail| svrid=%d| ret=%d", from, ret);
+                 CliMgr::Instance()->removeAliasChild(outcli, true);
+                 continue;
+            }
+            cli = outcli;
+        }
+
+        AfterUpdatePropsHandle(cli);
+    }
     return ret;
 }
-
 // 客户（外部）属性改变的处理
 // remark: svrreg="prvd_REGNAME%10+prvd_REGNAME2%11"
 //         provname="prvd_REGNAME”
@@ -574,31 +591,27 @@ string BroadCastCli::GetDebugTrace( void )
  *            down:[..], // 下线的svrid
  *            up:[..] }  // 在线的svrid
  **/
-int BroadCastCli::on_CMD_UPDATEERA_REQ( IOHand* iohand, const Value* doc, unsigned seqid )
+int BroadCastCli::on_CMD_UPDATEERA_REQ(IOHand* iohand, const nlohmann::json& obj, unsigned seqid)
 {
-    int ret = 0;
-    int tmpsvr = 0;
-    const Value* downlist = NULL;
-    const Value* uplist = NULL;
+	int ret = 0;
 
-    if (0 == Rjson::GetArray(&downlist, UPDATE_CLIPROP_DOWNKEY, doc))
-    {
-        for (int i = 0; 0 == Rjson::GetInt(tmpsvr, i, downlist); ++i)
-        {
-            CliBase* cliptr = CliMgr::Instance()->getChildBySvrid(tmpsvr);
-            if (cliptr && !cliptr->isLocal())
-            {
-                CliMgr::Instance()->removeAliasChild(cliptr, true);
-            }
-        }
-    }
+	if (obj.find(UPDATE_CLIPROP_DOWNKEY) != obj.end())
+	{
+		for (const int& tmpsvr : obj.at(UPDATE_CLIPROP_DOWNKEY))
+		{
+			CliBase* cliptr = CliMgr::Instance()->getChildBySvrid(tmpsvr);
+			if (cliptr && !cliptr->isLocal())
+			{
+				CliMgr::Instance()->removeAliasChild(cliptr, true);
+			}
+		}
+	}
 
-    if (0 == Rjson::GetArray(&uplist, UPDATE_CLIPROP_UPKEY, doc))
-    {
-        RJSON_VGETINT_D(from, BROARDCAST_KEY_FROM, doc);
-        ret = UpdateCliProps(uplist, from);
-    }
-
-    return ret;
+	if (obj.find(UPDATE_CLIPROP_UPKEY) != obj.end())
+	{
+		int from = obj.value(BROARDCAST_KEY_FROM, 0);
+		ret = UpdateCliProps(obj.at(UPDATE_CLIPROP_UPKEY), from);
+	}
+	return ret;
 }
 

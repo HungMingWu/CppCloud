@@ -85,6 +85,14 @@ int CliBase::Json2Map( const Value* objnode )
     return ret;
 }
 
+int CliBase::Json2Map(const nlohmann::json &obj)
+{
+	IFRETURN_N(!obj.is_object(), -1);
+	for (const auto &[key, val] : obj.items())
+		setProperty(key, (std::string)val);
+	return 0;
+}
+
 void CliBase::setIntProperty( const string& key, int val )
 {
 	m_cliProp[key] = std::to_string(val);
@@ -118,6 +126,21 @@ int CliBase::unserialize( const Value* rpJsonValue )
 		if (1 == m_cliType)
 		{
 			LOGERROR("CLIUNSERIALIZE| msg=%s cannot set to clitype=1", m_idProfile.c_str());
+			m_cliType = 99999999;
+		}
+	}
+	return ret;
+}
+
+int CliBase::unserialize(const nlohmann::json &obj)
+{
+	int ret = Json2Map(obj);
+	m_era = getIntProperty("ERAN");
+	if (0 == m_cliType)
+	{
+		m_cliType = getIntProperty(CLIENT_TYPE_KEY);
+		if (1 == m_cliType)
+		{
 			m_cliType = 99999999;
 		}
 	}

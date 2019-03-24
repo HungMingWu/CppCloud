@@ -42,9 +42,8 @@ private:
 	// 服务提供者退出或禁用，通知各订阅过服务的消费者
 	void notify2Invoker( const std::string& regname, int svrid, int prvdid );
 	// 注册或设备服务提供者的属性
-	int setProviderProperty( CliBase* cli, const void* doc, const std::string& regname );
-	static int CheckValidUrlProtocol( CliBase* cli, const void* doc, const std::string& regname2, unsigned seqid ) ;
-
+	int setProviderProperty(CliBase* cli, const nlohmann::json &prop, const std::string& regname);
+	static int CheckValidUrlProtocol(CliBase* cli, const nlohmann::json& prop, const std::string& regname2, unsigned seqid);
 private:
 	std::map<std::string, ServiceProvider*> m_providers;
 	int m_seqid;

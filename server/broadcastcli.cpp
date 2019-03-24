@@ -13,6 +13,25 @@
 #include "provider_manage.h"
 #include "comm/json.hpp"
 
+class context_t {
+	IOHand* iohand_;
+	IOBuffItem* iBufItem;
+	unsigned seqid_;
+	nlohmann::json obj_;
+public:
+	context_t(void *ptr, void *param) : iohand_((IOHand *)ptr), iBufItem((IOBuffItem *)param)
+	{
+		seqid_ = iBufItem->head()->seqid;
+		const char* body = iBufItem->body();
+		std::string_view body1(body, iBufItem->totalLen - HEADER_LEN);
+		obj_ = nlohmann::json::parse(body1, nullptr, false);
+	}
+	unsigned seqid() const { return seqid_; }
+	bool isValid() const { return !obj_.is_discarded(); }
+	nlohmann::json& obj() { return obj_; }
+	IOHand* io() { return iohand_; }
+};
+
 HEPCLASS_IMPL_FUNCX_BEG(BroadCastCli)
 HEPCLASS_IMPL_FUNCX_MORE_S(BroadCastCli, TransToAllPeer)
 HEPCLASS_IMPL_FUNCX_MORE_S(BroadCastCli, OnBroadCMD)
@@ -80,110 +99,78 @@ int BroadCastCli::qrun( int flag, long p2 )
 
 int BroadCastCli::TransToAllPeer( void* ptr, unsigned cmdid, void* param )
 {
-	CMDID2FUNCALL_BEGIN
-	Document doc;
-    int ret = 0;
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), ctx.io()->m_idProfile + " body json invalid");
 
-    if (doc.Parse(body).HasParseError())  throw NormalExceptionOn(404, cmdid|CMDID_MID, seqid, iohand->m_idProfile+" body json invalid");
-    
-    bool includeCli = doc.HasMember(BROARDCAST_KEY_CLIS);
-    ret = 0==BroadCastCli::Instance()->toWorld(doc, cmdid, seqid, includeCli)? 1: 0;
-    return ret;
+	bool includeCli = (ctx.obj().find(BROARDCAST_KEY_CLIS) != ctx.obj().end());
+	return 0 == BroadCastCli::Instance()->toWorld(ctx.obj(), cmdid, ctx.seqid(), includeCli) ? 1 : 0;
 }
 
 /**
  * @summery: 包体为json的消息广播
  * @desc: 必须包含的字段 {"from": 123, "pass": " 2 3 ", "path": "1>3>", "jump": 1}
  */
-int BroadCastCli::toWorld( Document& doc, unsigned cmdid, unsigned seqid, bool includeCli )
+int BroadCastCli::toWorld(nlohmann::json& obj, unsigned cmdid, unsigned seqid, bool includeCli)
 {
-    int ret = 0;
-    int ntmp = 0;
-    static const string str_my_svrid = std::to_string(s_my_svrid);
-    static const string str_my_svrid1 = _F("%d ", s_my_svrid);
-    static const string str_my_svrid2 = _F(" %d ", s_my_svrid);
+	int ret = 0;
+	static const string str_my_svrid = std::to_string(s_my_svrid);
+	static const string str_my_svrid1 = _F("%d ", s_my_svrid);
+	static const string str_my_svrid2 = _F(" %d ", s_my_svrid);
 
-    if (!doc.IsObject()) throw NormalExceptionOn(404, cmdid|CMDID_MID, seqid, "msgbody must be Object{}");
-    // 处理发出源from的svrid
-    int ofrom = 0;
-    if (Rjson::GetInt(ofrom, BROARDCAST_KEY_FROM, &doc))
-    {
-        ofrom = s_my_svrid;
-        doc.AddMember(BROARDCAST_KEY_FROM, s_my_svrid, doc.GetAllocator());
-    }
+	if (!obj.is_object()) throw NormalExceptionOn(404, cmdid | CMDID_MID, seqid, "msgbody must be Object{}");
+	// 处理发出源from的svrid
+	int ofrom = obj.value(BROARDCAST_KEY_FROM, s_my_svrid);
+	// 处理"已经走过的节点"
+	std::string haspass = obj.value(BROARDCAST_KEY_PASS, "");
+	if (haspass.find(str_my_svrid2) == std::string::npos)
+		haspass += str_my_svrid1;
 
-    // 处理"已经走过的节点"
-    string haspass;
-    Rjson::GetStr(haspass, BROARDCAST_KEY_PASS, &doc);
-    if (haspass.empty())
-    {
-        haspass = str_my_svrid2;
-    }
-    else
-    {
-        if (haspass.find(str_my_svrid2) == string::npos)
-        {
-            haspass += str_my_svrid1;
-        }
-    }
+	CliMgr::AliasCursor alcr(SERV_IN_ALIAS_PREFIX);
+	CliBase *cli = NULL;
+	vector<CliBase*> vecCli;
+	while ((cli = alcr.pop()))
+	{
+		string svridstr = cli->getProperty(CONNTERID_KEY);
+		if (haspass.find(string(" ") + svridstr + " ") == string::npos)
+		{
+			haspass += svridstr + " ";
+			vecCli.push_back(cli);
+		}
+	}
 
-    CliMgr::AliasCursor alcr(SERV_IN_ALIAS_PREFIX); // 查找出所有直连的Serv节点
-    CliBase *cli = NULL;
-    vector<CliBase*> vecCli;
-    while ((cli = alcr.pop()))
-    {
-        WARNLOG_IF1BRK(cli->getCliType() != SERV_CLITYPE_ID && !cli->isLocal(), -23,
-                       "BROADCASTRUN| msg=flow unexception| cli=%s", cli->m_idProfile.c_str());
-        string svridstr = cli->getProperty(CONNTERID_KEY);
-        if (haspass.find(string(" ") + svridstr + " ") == string::npos) // 未经过才需要
-        {
-            haspass += svridstr + " ";
-            vecCli.push_back(cli);
-        }
-    }
+	IFRETURN_N(vecCli.empty(), 0);
 
-    IFRETURN_N(vecCli.empty(), 0);
-    Rjson::SetObjMember(BROARDCAST_KEY_PASS, haspass, &doc);
+	obj[BROARDCAST_KEY_PASS] = haspass;
+	obj[BROARDCAST_KEY_TRAIL] = obj.value(BROARDCAST_KEY_TRAIL, "") + str_my_svrid + ">";
+	// 跳数处理
+	obj[BROARDCAST_KEY_JUMP] = obj.value(BROARDCAST_KEY_JUMP, 0) + 1;
 
-    // 处理实际走过的点
-    string actpath;
-    Rjson::GetStr(actpath, BROARDCAST_KEY_TRAIL, &doc);
-    actpath += str_my_svrid + ">";
-    Rjson::SetObjMember(BROARDCAST_KEY_TRAIL, actpath, &doc);
+	if (includeCli && obj.find(BROARDCAST_KEY_CLIS) == obj.end())
+	{
+		obj[BROARDCAST_KEY_CLIS] = "";
+	}
 
-    // 跳数处理
-    ntmp = 0;
-    Rjson::GetInt(ntmp, BROARDCAST_KEY_JUMP, &doc);
-    doc.RemoveMember(BROARDCAST_KEY_JUMP);
-    doc.AddMember(BROARDCAST_KEY_JUMP, ++ntmp, doc.GetAllocator());
+	string reqbody = obj.dump();
+	for (unsigned i = 0; i < vecCli.size(); ++i)
+	{
+		IOHand* cli = dynamic_cast<IOHand *>(vecCli[i]);
+		if (cli)
+		{
+			cli->sendData(cmdid, seqid, reqbody.c_str(), reqbody.length(), true);
+			DEBUG_TRACE("3/b. base-%d sendto pass [%s] body is %s", ofrom, cli->m_idProfile.c_str(), reqbody.c_str());
+		}
+		else
+		{
+		}
+	}
+	if (includeCli)
+	{
+		std::string clifilter = obj.at(BROARDCAST_KEY_CLIS);
+		ret = toAllLocalCli(cmdid, seqid, reqbody, clifilter);
+	}
 
-    if (includeCli && !doc.HasMember(BROARDCAST_KEY_CLIS))
-    {
-        doc.AddMember(BROARDCAST_KEY_CLIS, "", doc.GetAllocator());
-    }
-
-    string reqbody(Rjson::ToString(&doc));
-    for (unsigned i = 0; i < vecCli.size(); ++i)
-    {
-        IOHand* cli = dynamic_cast<IOHand *>(vecCli[i]);
-        if (cli)
-        {
-            cli->sendData(cmdid, seqid, reqbody.c_str(), reqbody.length(), true);
-            DEBUG_TRACE("3/b. base-%d sendto pass [%s] body is %s", ofrom, cli->m_idProfile.c_str(), reqbody.c_str());
-        }
-        else
-        {
-            LOGERROR("BROADCASTWORLD| msg=alias unmatch| cli=%p", vecCli[i]);
-        }
-    }
-    if (includeCli)
-    {
-        string clifilter;
-        Rjson::GetStr(clifilter, BROARDCAST_KEY_CLIS, &doc);
-        ret = toAllLocalCli(cmdid, seqid, reqbody, clifilter);
-    }
-
-    return ret;
+	return ret;
 }
 
 // clifilter非空时过滤只发送给符合条件的cli
@@ -233,15 +220,12 @@ int BroadCastCli::toAllLocalCli( unsigned cmdid, unsigned seqid, const string& m
 
 int BroadCastCli::toWorld( const string& jsonmsg, unsigned cmdid, unsigned seqid, bool incCli )
 {
-    Document doc;
+	auto obj = nlohmann::json::parse(jsonmsg, nullptr, false);
+	if (obj.is_discarded())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, seqid, "jsonmsg json invalid");
 
-    if (doc.Parse(jsonmsg.c_str()).HasParseError()) 
-    {
-        throw NormalExceptionOn(404, cmdid|CMDID_MID, seqid, "jsonmsg json invalid");
-    }
-
-    if (0 == seqid) seqid = ++m_seqid;
-    return toWorld(doc, cmdid, seqid, incCli);
+	if (0 == seqid) seqid = ++m_seqid;
+	return toWorld(obj, cmdid, seqid, incCli);
 }
 
 

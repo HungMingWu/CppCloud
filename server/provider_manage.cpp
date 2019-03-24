@@ -9,6 +9,25 @@
 #include "comm/strparse.h"
 #include "cloud/const.h"
 
+class context_t {
+	IOHand* iohand_;
+	IOBuffItem* iBufItem;
+	unsigned seqid_;
+	nlohmann::json obj_;
+public:
+	context_t(void *ptr, void *param) : iohand_((IOHand *)ptr), iBufItem((IOBuffItem *)param)
+	{
+		seqid_ = iBufItem->head()->seqid;
+		const char* body = iBufItem->body();
+		std::string_view body1(body, iBufItem->totalLen - HEADER_LEN);
+		obj_ = nlohmann::json::parse(body1, nullptr, false);
+	}
+	unsigned seqid() const { return seqid_; }
+	bool isValid() const { return !obj_.is_discarded(); }
+	nlohmann::json& obj()  { return obj_; }
+	IOHand* io() { return iohand_; }
+};
+
 HEPCLASS_IMPL_FUNCX_BEG(ProviderMgr)
 HEPCLASS_IMPL_FUNCX_END(ProviderMgr)
 
@@ -87,56 +106,62 @@ void ProviderMgr::notify2Invoker( const std::string& regname, int svrid, int prv
  **/
 int ProviderMgr::OnCMD_SVRREGISTER_REQ( void* ptr, unsigned cmdid, void* param )
 {
-    MSGHANDLE_PARSEHEAD(false);
-	RJSON_GETSTR_D(regname, &doc);
-	NormalExceptionOn_IFTRUE(regname.empty(), 400, CMD_SVRREGISTER_RSP, seqid, "leak of regname");
-	
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), "body json invalid " __FILE__);
+	std::string regname = ctx.obj().value("regname", "");
+	NormalExceptionOn_IFTRUE(regname.empty(), 400, CMD_SVRREGISTER_RSP, ctx.seqid(), "leak of regname");
+
 	int ret = 0;
-	int svrid = 0;
+	int svrid;
 	CliBase* cli = NULL;
 
-	if (0 == Rjson::GetInt(svrid, CONNTERID_KEY, &doc)) // 来自其他Peer-Serv的广播
+	if (ctx.obj().find(CONNTERID_KEY) != ctx.obj().end()) // 来自其他Peer-Serv的广播
 	{
+		svrid = ctx.obj().at(CONNTERID_KEY);
 		cli = CliMgr::Instance()->getChildBySvrid(svrid);
-		NormalExceptionOn_IFTRUE(NULL==cli, 400, CMD_SVRREGISTER_RSP, seqid, _F("invalid svrid %d", svrid));
+		NormalExceptionOn_IFTRUE(NULL == cli, 400, CMD_SVRREGISTER_RSP, ctx.seqid(), _F("invalid svrid %d", svrid));
 	}
 	else // 来自客户应用的上报
 	{
-		cli = iohand;
-		svrid = iohand->getIntProperty(CONNTERID_KEY);
-		Rjson::SetObjMember(CONNTERID_KEY, svrid, &doc);
-		BroadCastCli::Instance()->toWorld(doc, CMD_SVRREGISTER2_REQ, ++this->m_seqid, false);
+		cli = ctx.io();
+		svrid = ctx.io()->getIntProperty(CONNTERID_KEY);
+		ctx.obj()[CONNTERID_KEY] = svrid;
+		BroadCastCli::Instance()->toWorld(ctx.obj(), CMD_SVRREGISTER2_REQ, ++this->m_seqid, false);
 	}
 
-	int prvdid = 0;
-	Rjson::GetInt(prvdid, SVRREG_PROP_KEY, "prvdid", &doc);
+	auto prop = ctx.obj().at(SVRREG_PROP_KEY);
+	int prvdid = prop.value("prvdid", 0);
 
 	std::string regname2 = _F("%s%s%%%d", SVRPROP_PREFIX, regname.c_str(), prvdid);
 
-	int urlChange = CheckValidUrlProtocol(cli, &doc, regname2, seqid);
+	int urlChange = CheckValidUrlProtocol(cli, prop, regname2, ctx.seqid());
 	int enableBeforValue = cli->getIntProperty(regname2 + ":enable");
-	ret = this->setProviderProperty(cli, &doc, regname2);
+	ret = setProviderProperty(cli, prop, regname2);
+
 	int enableAfterValue = cli->getIntProperty(regname2 + ":enable");
 	bool enableChange = (1 == enableBeforValue && 0 == enableAfterValue);
 	bool isNewPrvd = !this->hasProviderItem(cli, regname, prvdid);
 
-	if (0 == ret && (urlChange || enableChange)) // 禁用服务时触发
+	if (0 == ret && (urlChange || enableChange))  // 禁用服务时触发
 	{
-		// 通知各个订阅者
 		this->notify2Invoker(regname, svrid, prvdid);
 	}
 
 	this->updateProvider(cli, regname, prvdid);
-	std::string resp = _F("{\"code\": 0, \"desc\": \"reg %s result %d\"}", regname2.c_str(), ret);
-	iohand->sendData(CMD_SVRREGISTER_RSP, seqid, resp.c_str(), resp.length(), true);
+	nlohmann::json respobj{
+		{"code", 0},
+		{"desc", std::string("reg ") + regname2 + "result " + std::to_string(ret)}
+	};
+	std::string resp = respobj.dump();
+	ctx.io()->sendData(CMD_SVRREGISTER_RSP, ctx.seqid(), resp.c_str(), resp.length(), true);
 
-	// 系统日志记录 (添加Prvd)
 	if (isNewPrvd)
 	{
-		Actmgr::Instance()->appendCliOpLog(_F("PRVDREG| regname=%s| opcli=%s| reqmsg=", 
-				regname2.c_str(), cli->m_idProfile.c_str()) + Rjson::ToString(&doc));
+		Actmgr::Instance()->appendCliOpLog(_F("PRVDREG| regname=%s| opcli=%s| reqmsg=",
+			regname2.c_str(), cli->m_idProfile.c_str()) + ctx.obj().dump());
 	}
-	
+
 	return ret;
 }
 
@@ -153,90 +178,50 @@ void ProviderMgr::updateProvider( CliBase* cli,  const std::string& regname, int
 }
 
 // url&protocol合法性检查
-int ProviderMgr::CheckValidUrlProtocol( CliBase* cli, const void* doc, const std::string& regname2, unsigned seqid )
+int ProviderMgr::CheckValidUrlProtocol(CliBase* cli, const nlohmann::json& prop, const std::string& regname2, unsigned seqid)
 {
-	std::string url1;
 	std::string url0 = cli->getProperty(regname2 + ":url");
-	int protocol1 = 0;
-	int ret = 0;
-	
-	if (0 != Rjson::GetStr(url1, SVRREG_PROP_KEY, "url", (const Document*)doc))
-	{
-		url1 = url0;
-	}
-	else
-	{
-		if (!url0.empty() && !url1.empty() && url1 != url0)
-		{
-			ret = 1;
-		}
-	}
-	if (0 != Rjson::GetInt(protocol1, SVRREG_PROP_KEY, "protocol", (const Document*)doc))
-	{
-		protocol1 = cli->getIntProperty(regname2 + ":protocol");
-	}
+	std::string url1 = prop.value("url", url0);
+	int protocol1 = prop.value("protocol", cli->getIntProperty(regname2 + ":protocol"));
 
 	if (!url1.empty() && 0 != protocol1)
 	{
 		static const int protocolLen = 4;
-		static const std::string urlPrefix[protocolLen+1] = {"tcp", "udp", "http", "https", "x"};
-		NormalExceptionOn_IFTRUE(protocol1 > protocolLen || protocol1 <= 0, 400, 
-				CMD_SVRREGISTER_RSP, seqid, _F("invalid protocol %d", protocol1));
-	 	NormalExceptionOn_IFTRUE(0 != url1.find(urlPrefix[protocol1-1]), 400, 
-				CMD_SVRREGISTER_RSP, seqid, "url protocol not match");
+		static const std::string urlPrefix[protocolLen + 1] = { "tcp", "udp", "http", "https", "x" };
+		NormalExceptionOn_IFTRUE(protocol1 > protocolLen || protocol1 <= 0, 400,
+			CMD_SVRREGISTER_RSP, seqid, _F("invalid protocol %d", protocol1));
+		NormalExceptionOn_IFTRUE(0 != url1.find(urlPrefix[protocol1 - 1]), 400,
+			CMD_SVRREGISTER_RSP, seqid, "url protocol not match");
 	}
 
-	return ret;
+	return (url0 != url1);
 }
 
-int ProviderMgr::setProviderProperty( CliBase* cli, const void* doc, const std::string& regname2 )
+int ProviderMgr::setProviderProperty(CliBase* cli, const nlohmann::json &prop, const std::string& regname2)
 {
-	int ret = -1;
-	const Value* svrprop = NULL;
-	if (0 == Rjson::GetObject(&svrprop, SVRREG_PROP_KEY, (const Document*)doc) && svrprop)
-	{
-		Value::ConstMemberIterator itr = svrprop->MemberBegin();
-    	for (; itr != svrprop->MemberEnd(); ++itr)
-		{
-			const char* key = itr->name.GetString();
-			if (itr->value.IsString())
-			{
-				const char* val = itr->value.GetString();
-				cli->setProperty(regname2 + ":" + key, val);
-			}
-			else if (itr->value.IsInt())
-			{
-				std::string val = std::to_string(itr->value.GetInt());
-				cli->setProperty(regname2 + ":" + key, val);
-			}
-			else if (itr->value.IsBool()) // true -> "1", false -> "0"
-			{
-				cli->setProperty(regname2 + ":" + key, itr->value.IsTrue()? "1": "0");
-			}
-		}
-		ret = 0;
-	}
-
-	return ret;
+	for (const auto& [key, value] : prop.items())
+		cli->setProperty(regname2 + ":" + key, value.dump());
+	return 0;
 }
 
 // format: {"regname": "app1", version: 1, idc: 1, rack: 2, bookchange: 1 }
 int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 {
-    MSGHANDLE_PARSEHEAD(false);
-	RJSON_GETSTR_D(regname, &doc);
-	NormalExceptionOn_IFTRUE(regname.empty(), 400, CMD_SVRSEARCH_RSP, seqid, "leak of regname");
-	RJSON_GETINT_D(version, &doc);
-	RJSON_GETINT_D(idc, &doc);
-	RJSON_GETINT_D(rack, &doc);
-	RJSON_GETINT_D(bookchange, &doc);
-	int limit = 4;
-	RJSON_GETINT(limit, &doc);
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), "body json invalid " __FILE__);
+	std::string regname = ctx.obj().value("regname", "");
+	NormalExceptionOn_IFTRUE(regname.empty(), 400, CMD_SVRSEARCH_RSP, ctx.seqid(), "leak of regname");
+	int version = ctx.obj().value("version", 0);
+	int idc = ctx.obj().value("idc", 0);
+	int rack = ctx.obj().value("rack", 0);
+	int bookchange = ctx.obj().value("bookchange", 0);
+	int limit = ctx.obj().value("limit", 4);
 
 	if (0 == idc)
 	{
-		idc = iohand->getIntProperty("idc");
-		rack = iohand->getIntProperty("rack");
+		idc = ctx.io()->getIntProperty("idc");
+		rack = ctx.io()->getIntProperty("rack");
 	}
 
 	auto vec = getOneProviderJson(regname, idc, rack, version, limit);
@@ -250,27 +235,30 @@ int ProviderMgr::OnCMD_SVRSEARCH_REQ( void* ptr, unsigned cmdid, void* param )
 
 	if (bookchange) // 订阅改变事件（cli下线）
 	{
-		std::string alias = std::string(SVRBOOKCH_ALIAS_PREFIX) + "_" + regname + "@" + iohand->getProperty(CONNTERID_KEY);
-		CliMgr::Instance()->addAlias2Child(alias, iohand);
+		std::string alias = std::string(SVRBOOKCH_ALIAS_PREFIX) + "_" + regname + "@" + ctx.io()->getProperty(CONNTERID_KEY);
+		CliMgr::Instance()->addAlias2Child(alias, ctx.io());
 	}
 
-	return iohand->sendData(CMD_SVRSEARCH_RSP, seqid, resp.c_str(), resp.length(), true);
+	return ctx.io()->sendData(CMD_SVRSEARCH_RSP, ctx.seqid(), resp.c_str(), resp.length(), true);
 }
 
 // format: {"regname": "all"}
 int ProviderMgr::OnCMD_SVRSHOW_REQ( void* ptr, unsigned cmdid, void* param )
 {
-    MSGHANDLE_PARSEHEAD(false);
-	RJSON_GETSTR_D(regname, &doc);
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), "body json invalid " __FILE__);
+	std::string regname = ctx.obj().value("regname", "");
 	//RJSON_GETINT_D(onlyname, &doc);
-    bool ball = (regname.empty() || "all" == regname);
-    auto vec = ball ? getAllJson() : getOneProviderJson(regname);
-    nlohmann::json obj {
+
+	bool ball = (regname.empty() || "all" == regname);
+	auto vec = ball ? getAllJson() : getOneProviderJson(regname);
+	nlohmann::json obj{
 		{"data", vec},
 		{"len", (int)vec.size()}
-    };
-    std::string resp = obj.dump();
-    return iohand->sendData(CMD_SVRSHOW_RSP, seqid, resp.c_str(), resp.length(), true);
+	};
+	std::string resp = obj.dump();
+	return ctx.io()->sendData(CMD_SVRSHOW_RSP, ctx.seqid(), resp.c_str(), resp.length(), true);
 }
 
 // format: [{"prvdid": 1, "pvd_ok": 10}]

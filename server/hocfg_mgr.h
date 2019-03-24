@@ -58,7 +58,7 @@ private:
 	void remove( const std::string& cfgname, time_t mtime );
 
 	int parseConffile( const std::string& filename, const std::string& contents, time_t mtime ); // 读出,解析
-	int save2File( const std::string& filename, const Value* doc ) const; // 持久化至磁盘
+	int save2File(const std::string& filename, const std::string &doc) const;  // 持久化至磁盘
 
 	int mergeJsonFile( Value* node0, const Value* node1, MemoryPoolAllocator<>& allc ) const; // 合并继承json
 	int queryByKeyPattern( std::string& result, const Value* jdoc,

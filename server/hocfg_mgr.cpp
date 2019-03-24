@@ -20,6 +20,24 @@
 #include <cerrno>
 #include <cstdio>
 
+class context_t {
+	IOHand* iohand_;
+	IOBuffItem* iBufItem;
+	unsigned seqid_;
+	nlohmann::json obj_;
+public:
+	context_t(void *ptr, void *param) : iohand_((IOHand *)ptr), iBufItem((IOBuffItem *)param)
+	{
+		seqid_ = iBufItem->head()->seqid;
+		const char* body = iBufItem->body();
+		std::string_view body1(body, iBufItem->totalLen - HEADER_LEN);
+		obj_ = nlohmann::json::parse(body1, nullptr, false);
+	}
+	unsigned seqid() const { return seqid_; }
+	bool isValid() const { return !obj_.is_discarded(); }
+	nlohmann::json& obj() { return obj_; }
+	IOHand* io() { return iohand_; }
+};
 
 HEPCLASS_IMPL_FUNCX_BEG(HocfgMgr)
 HEPCLASS_IMPL_FUNCX_END(HocfgMgr)
@@ -324,66 +342,69 @@ int HocfgMgr::queryByKeyPattern( std::string& result, const Value* jdoc, const s
  **/
 int HocfgMgr::OnSetConfigHandle( void* ptr, unsigned cmdid, void* param )
 {
-    MSGHANDLE_PARSEHEAD(false)
-    RJSON_GETSTR_D(callby, &doc); // cfg_newer:来自某一Serv请求某文件; null:来自web-cli到达的修改; setall:广播设备所有
-    RJSON_GETSTR_D(filename, &doc);
-    RJSON_GETINT_D(mtime, &doc);
-    const Value* contents = NULL;
-    Rjson::GetValue(&contents, "contents", &doc);
-    NormalExceptionOn_IFTRUE(filename.empty(), 400, cmdid, seqid, "leak of filename param");
+	context_t ctx(ptr, param);
+	if (!ctx.isValid())
+		throw NormalExceptionOn(404, cmdid | CMDID_MID, ctx.seqid(), "body json invalid " __FILE__);
+	std::string callby = ctx.obj().value("callby", ""); // cfg_newer:来自某一Serv请求某文件; null:来自web-cli到达的修改; setall:广播设备所有
+	std::string filename = ctx.obj().value("filename", "");
+	int mtime = ctx.obj().value("mtime", 0);
+	std::string contents = ctx.obj().value("contents", "");
+	NormalExceptionOn_IFTRUE(filename.empty(), 400, cmdid, ctx.seqid(), "leak of filename param");
 
-    int ret = 0;
-    std::string desc;
-    if (0 == mtime) mtime = time(NULL);
-    
+	int ret = 0;
+	std::string desc;
+	if (0 == mtime) mtime = time(NULL);
 
-    if (NULL == contents || contents->IsNull()) // 删除操作
-    {
-        this->remove(filename, mtime); // xx清除内存xx, 同时unlink磁盘文件
-        desc = _F("remove %s success", filename.c_str());
-        Actmgr::Instance()->appendCliOpLog(
-            _F("CONFDEL| filename=%s| mtime=%d(%s)", 
-            filename.c_str(), mtime, TimeF::StrFTime("%F %T", mtime)) );
-    }
-    else
-    {
-        std::string fullfilename = this->m_cfgpath + filename; // 文件名要加上本地路径来存储
-        ret = this->parseConffile(fullfilename, Rjson::ToString(contents), mtime);
-        desc = (0==ret)? "success": "fail";
-        if (0 == ret)
-        {
-            ret = this->save2File(fullfilename, contents);
-        }
+	if (contents.empty())
+	{
+		this->remove(filename, mtime);
+		desc = _F("remove %s success", filename.c_str());
+		Actmgr::Instance()->appendCliOpLog(
+			_F("CONFDEL| filename=%s| mtime=%d(%s)",
+				filename.c_str(), mtime, TimeF::StrFTime("%F %T", mtime)));
+	}
+	else
+	{
+		std::string fullfilename = this->m_cfgpath + filename;
+		ret = this->parseConffile(fullfilename, contents, mtime);
+		desc = (0 == ret) ? "success" : "fail";
+		if (0 == ret)
+		{
+			ret = this->save2File(fullfilename, contents);
+		}
 
-        Actmgr::Instance()->appendCliOpLog(
-            _F("CONFCHANGE| filename=%s| mtime=%d(%s)| opcli=%s| result=%s", 
-            filename.c_str(), mtime, TimeF::StrFTime("%F %T", mtime), 
-            iohand->m_idProfile.c_str(), desc.c_str()) );
-    }
+		Actmgr::Instance()->appendCliOpLog(
+			_F("CONFCHANGE| filename=%s| mtime=%d(%s)| opcli=%s| result=%s",
+				filename.c_str(), mtime, TimeF::StrFTime("%F %T", mtime),
+				ctx.io()->m_idProfile.c_str(), desc.c_str()));
+	}
 
-    this->notifyChange(filename, mtime);
-    if (CMD_SETCONFIG_REQ == cmdid)
-    {
-        std::string resp = _F("{\"code\": %d, \"mtime\":%d, \"desc\": \"%s\"}",
-            ret, mtime, desc.c_str());
-        iohand->sendData(CMD_SETCONFIG_RSP, seqid, resp.c_str(), resp.length(), true);
+	this->notifyChange(filename, mtime);
+	if (CMD_SETCONFIG_REQ == cmdid)
+	{
+		nlohmann::json respobj {
+			{"code", ret},
+			{"mtime", mtime},
+			{"desc", desc}
+		};
+		std::string resp = respobj.dump();
+		ctx.io()->sendData(CMD_SETCONFIG_RSP, ctx.seqid(), resp.c_str(), resp.length(), true);
 
-        //int fromcli = iohand->getIntProperty(CONNTERID_KEY);
-        //ret = Rjson::SetObjMember(BROARDCAST_KEY_FROM, fromcli, &doc);
-        ret = Rjson::SetObjMember("callby", "setall", &doc);
-        ERRLOG_IF1(ret, "HOCFGSET| msg=set callby fail| cmdid=0x%X| mi=%s", cmdid, iohand->m_idProfile.c_str());
-        ret = BroadCastCli::Instance()->toWorld(doc, CMD_SETCONFIG3_REQ, seqid, false);
-        LOGINFO("HOCFGSET| msg=modify hocfg by app(%s)| filename=%s| ret=%d", iohand->m_idProfile.c_str(), filename.c_str(), ret);
-    }
-    else
-    {
-        std::string from;
-        RJSON_VGETSTR(from, BROARDCAST_KEY_FROM, &doc);
-        LOGINFO("HOCFGSET| msg=modify hocfg by Serv(%s) %s| filename=%s| ret=%d", 
-            from.c_str(), callby.c_str(), filename.c_str(), ret);
-    }
+		//int fromcli = iohand->getIntProperty(CONNTERID_KEY);
+		//ret = Rjson::SetObjMember(BROARDCAST_KEY_FROM, fromcli, &doc);
+		ctx.obj()["callby"] = "setall";
+		ERRLOG_IF1(ret, "HOCFGSET| msg=set callby fail| cmdid=0x%X| mi=%s", cmdid, ctx.io()->m_idProfile.c_str());
+		ret = BroadCastCli::Instance()->toWorld(ctx.obj(), CMD_SETCONFIG3_REQ, ctx.seqid(), false);
+		LOGINFO("HOCFGSET| msg=modify hocfg by app(%s)| filename=%s| ret=%d", ctx.io()->m_idProfile.c_str(), filename.c_str(), ret);
+	}
+	else
+	{
+		std::string from = ctx.obj().value(BROARDCAST_KEY_FROM, "");
+		LOGINFO("HOCFGSET| msg=modify hocfg by Serv(%s) %s| filename=%s| ret=%d",
+			from.c_str(), callby.c_str(), filename.c_str(), ret);
+	}
 
-    return ret;
+	return ret;
 }
 
 // 当某配置发生变化时，通知到已订阅的客户端
@@ -470,19 +491,14 @@ void HocfgMgr::remove( const std::string& cfgname, time_t mtime )
     }
 }
 
-int HocfgMgr::save2File( const std::string& filename, const Value* doc ) const
+int HocfgMgr::save2File(const std::string& filename, const std::string &doc) const
 {
-    FILE* fp = NULL;
-    char buf[64];
-    fp = fopen(filename.c_str(), "w");
-    ERRLOG_IF1RET_N(fp<0, -49, "HOCFGSAVE| msg=fopen fail %d| filename=%s", errno, filename.c_str());
-    FileWriteStream osm(fp, buf, sizeof(buf));
-    PrettyWriter<FileWriteStream> writer(osm);
-    bool bret = doc->Accept(writer);
-    fclose(fp);
-    ERRLOG_IF1RET_N(!bret, -48, "HOCFGSAVE| msg=doc accept fail | filename=%s", filename.c_str());
-
-    return 0;
+	FILE* fp = fopen(filename.c_str(), "w");
+	ERRLOG_IF1RET_N(fp < 0, -49, "HOCFGSAVE| msg=fopen fail %d| filename=%s", errno, filename.c_str());
+	size_t total = fwrite(doc.data(), doc.size(), 1, fp);
+	fclose(fp);
+	ERRLOG_IF1RET_N(total != doc.size(), -48, "HOCFGSAVE| msg=doc write fail | filename=%s", filename.c_str());
+	return 0;
 }
 
 // 对比来自其他节点上的配置, 若本地过旧,则请求更新

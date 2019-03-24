@@ -9,6 +9,7 @@ Modification :
 #ifndef _SVRPROP_H_
 #define _SVRPROP_H_
 #include <string>
+#include "../comm/json.hpp"
 
 using std::string;
 
@@ -30,8 +31,7 @@ struct SvrProp
 
 	SvrProp( void );
 	bool valid( void ) const;
-
-	string jsonStr( void ) const;
+	nlohmann::json jsonStr() const;
 };
 
 

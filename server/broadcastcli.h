@@ -10,6 +10,7 @@ Modification :
 #define _BROADCAST_CLI_H_
 #include "comm/hep_base.h"
 #include "rapidjson/json.hpp"
+#include "comm/json.hpp"
 
 class CliBase;
 class IOHand;
@@ -36,7 +37,7 @@ public:
     static int setJsonMember( const string& key, const string& val, Document* node );
 
     // 消息广播方法
-    int toWorld( Document& doc, unsigned cmdid, unsigned seqid, bool includeCli );
+    int toWorld(nlohmann::json& obj, unsigned cmdid, unsigned seqid, bool includeCli);
     int toWorld( const string& jsonmsg, unsigned cmdid, unsigned seqid, bool includeCli );
     int toAllLocalCli( unsigned cmdid, unsigned seqid, const string& msg, const string& clifilter );
 
